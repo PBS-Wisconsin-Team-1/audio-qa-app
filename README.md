@@ -8,7 +8,7 @@ This application leverages machine learning and natural language processing to a
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- Python 3.10 or higher
 - [uv](https://github.com/astral-sh/uv) package manager
 
 ## Installation with uv (Optional)
