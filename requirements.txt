@@ -1,10 +1,10 @@
 
 # Requires Python >=3.10
 python_version >= "3.10"
+numpy>=1.24.0
 
 # Core dependencies will be added here as the project develops
 # Example dependencies for audio processing and ML:
-# numpy>=1.24.0
 # scipy>=1.10.0
 # librosa>=0.10.0
 # torch>=2.0.0
