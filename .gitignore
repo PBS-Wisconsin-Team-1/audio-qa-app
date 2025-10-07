@@ -125,6 +125,10 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
+# Audio files
+audio_files/
+*.wav
+
 # Node.js (if using any JavaScript/Node components)
 node_modules/
 npm-debug.log*

@@ -1,3 +1,5 @@
+[tool.hatch.build.targets.wheel]
+packages = ["src/audio_processing"]
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -25,6 +27,8 @@ classifiers = [
 ]
 
 dependencies = [
+    "librosa>=0.11.0",
+    "matplotlib>=3.10.6",
     "uv>=0.4.0",
 ]
 
