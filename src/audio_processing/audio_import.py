@@ -3,7 +3,7 @@ import librosa
 import numpy as np
 
 # default location for audio files is in "audio-qa-app/audio_files"
-AUDIO_DIR = os.path.join("..", "audio_files")
+AUDIO_DIR = os.path.join(".", "audio_files")
 
 class AudioLoader:
     def __init__(self, directory=AUDIO_DIR, sr=22050, mono=True):
