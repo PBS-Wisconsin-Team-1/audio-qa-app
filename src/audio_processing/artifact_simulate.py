@@ -97,7 +97,7 @@ class ArtifactSim:
             inserted_artifacts.append(('clipping', pos / 1000))  # Store in seconds
         
         # Export distorted audio
-        audio.export(output_file, format="wav")
+        audio.export(os.path.join(self.loader.directory, output_file), format="wav")
         print(f"\n✓ Distorted audio saved to {output_file}")
         print(f"Total artifacts inserted: {len(inserted_artifacts)}\n")
         
