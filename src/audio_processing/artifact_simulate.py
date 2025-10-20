@@ -1,7 +1,9 @@
 import random
+from tabnanny import verbose
 import numpy as np
 from pydub import AudioSegment
 from pydub.generators import WhiteNoise
+from .utils import seconds_to_mmss
 import os
 
 # Handle imports for both direct execution and module import
@@ -12,12 +14,6 @@ except ImportError:
     from audio_import import AudioLoader
 
 AUDIO_DIR = os.path.join("..", "audio_files")
-
-def seconds_to_mmss(seconds):
-    """Convert seconds to mm:ss format"""
-    minutes = int(seconds // 60)
-    secs = seconds % 60
-    return f"{minutes:02d}:{secs:05.2f}"
 
 class ArtifactSim:
     def __init__(self, directory=AUDIO_DIR, artifacts: dict=None):
@@ -56,50 +52,65 @@ class ArtifactSim:
         clipped_segment = segment._spawn(samples.astype(segment.array_type).tobytes())
         return audio[:position_ms] + clipped_segment + audio[position_ms + duration_ms:]
 
-    def distort_audio(self, input_file, output_file, seed=42):
+    def distort_audio(self, input_file, output_file, seed=42, verbose=False):
         inserted_artifacts = []
         random.seed(seed)
         audio = self.loader.load_audio_file(input_file, type="pydub")['data']
         length_ms = len(audio)
-        
-        print(f"\n=== Inserting artifacts into {input_file} ===")
-        
+
+        if verbose:
+            print(f"\n=== Inserting artifacts into {input_file} ===")
+
         # Insert clicks
         for i in range(self.artifacts['clicks']):
             pos = random.randint(0, length_ms - 10)
-            audio = self.insert_click(audio, pos)
+            duration = random.randint(3, 10)  # Randomize duration 3-10ms
+            audio = self.insert_click(audio, pos, duration_ms=duration)
             timestamp = seconds_to_mmss(pos / 1000)
-            print(f"Click #{i+1} at {timestamp}")
-            inserted_artifacts.append(('click', pos / 1000))  # Store in seconds
+            inserted_artifacts.append(('click', pos / 1000, duration))  # Store in seconds
+            
+            if verbose:
+                print(f"Click #{i+1} at {timestamp} (duration: {duration}ms)")
         
         # Insert pops
         for i in range(self.artifacts['pops']):
             pos = random.randint(0, length_ms - 30)
-            audio = self.insert_pop(audio, pos)
+            duration = random.randint(15, 40)  # Randomize duration 15-40ms
+            audio = self.insert_pop(audio, pos, duration_ms=duration)
             timestamp = seconds_to_mmss(pos / 1000)
-            print(f"Pop #{i+1} at {timestamp}")
-            inserted_artifacts.append(('pop', pos / 1000))  # Store in seconds
+            inserted_artifacts.append(('pop', pos / 1000, duration))  # Store in seconds
+
+            if verbose:
+                print(f"Pop #{i+1} at {timestamp} (duration: {duration}ms)")
         
         # Insert cutouts
         for i in range(self.artifacts['cutouts']):
             pos = random.randint(0, length_ms - 150)
-            audio = self.insert_cutout(audio, pos)
+            duration = random.randint(50, 200)  # Randomize duration 50-200ms
+            audio = self.insert_cutout(audio, pos, duration_ms=duration)
             timestamp = seconds_to_mmss(pos / 1000)
-            print(f"Cutout #{i+1} at {timestamp}")
-            inserted_artifacts.append(('cutout', pos / 1000))  # Store in seconds
+            inserted_artifacts.append(('cutout', pos / 1000, duration))  # Store in seconds
+            
+            if verbose:
+                print(f"Cutout #{i+1} at {timestamp} (duration: {duration}ms)")
         
         # Insert clipping
         for i in range(self.artifacts['clipping']):
             pos = random.randint(0, length_ms - 60)
-            audio = self.insert_clipping(audio, pos)
+            duration = random.randint(30, 100)  # Randomize duration 30-100ms
+            audio = self.insert_clipping(audio, pos, duration_ms=duration)
             timestamp = seconds_to_mmss(pos / 1000)
-            print(f"Clipping #{i+1} at {timestamp}")
-            inserted_artifacts.append(('clipping', pos / 1000))  # Store in seconds
+            inserted_artifacts.append(('clipping', pos / 1000, duration))  # Store in seconds
+            
+            if verbose:
+                print(f"Clipping #{i+1} at {timestamp} (duration: {duration}ms)")
         
         # Export distorted audio
         audio.export(os.path.join(self.loader.directory, output_file), format="wav")
-        print(f"\n✓ Distorted audio saved to {output_file}")
-        print(f"Total artifacts inserted: {len(inserted_artifacts)}\n")
+
+        if verbose:
+            print(f"\n✓ Distorted audio saved to {output_file}")
+            print(f"Total artifacts inserted: {len(inserted_artifacts)}\n")
         
         return inserted_artifacts
 
