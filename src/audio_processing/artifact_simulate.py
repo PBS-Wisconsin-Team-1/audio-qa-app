@@ -11,7 +11,7 @@ try:
 except ImportError:
     from audio_import import AudioLoader
 
-AUDIO_DIR = os.path.join(".", "audio_files")
+AUDIO_DIR = os.path.join("..", "audio_files")
 
 def seconds_to_mmss(seconds):
     """Convert seconds to mm:ss format"""

@@ -13,3 +13,4 @@ def detect_clipping(data, bit_depth=16):
     min_val = -max_val - 1
     clipping = np.any(data >= max_val) or np.any(data <= min_val)
     return clipping
+
