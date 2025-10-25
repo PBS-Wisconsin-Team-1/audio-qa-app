@@ -145,7 +145,7 @@ def main(argv=None):
 		return
 
 	if args.cmd == 'list':
-		list_files(loader)
+		list_files()
 	elif args.cmd == 'simulate':
 		simulate(args)
 	elif args.cmd == 'detect':
@@ -171,7 +171,7 @@ def interactive_loop():
 		print("  5) Quit")
 		choice = input("Enter choice [1-5]: ").strip()
 		if choice == '1':
-			list_files(loader)
+			list_files()
 		elif choice == '2':
 			inp = input("Input filename (in audio dir): ").strip()
 			out = input("Output filename: ").strip()
