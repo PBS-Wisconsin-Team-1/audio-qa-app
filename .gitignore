@@ -127,8 +127,11 @@ ehthumbs.db
 Desktop.ini
 
 # Audio files
-audio_files/
-*.wav
+# Track the audio_files folder but ignore its contents
+audio_files/*
+!audio_files/
+!audio_files/ex1.wav
+!audio_files/ex1_distorted.wav
 
 # Node.js (if using any JavaScript/Node components)
 node_modules/
