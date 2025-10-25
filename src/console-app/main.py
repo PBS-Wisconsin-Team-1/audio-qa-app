@@ -14,14 +14,16 @@ import argparse
 import os
 import sys
 from typing import List
-
-import matplotlib.pyplot as plt
 import numpy as np
+import librosa
+import librosa.display
+import matplotlib.pyplot as plt
+import distortion_detector as ddist
 
 try:
 	from audio_processing import audio_import, artifact_simulate, distortion_detection as dd
 except Exception:
-	# allow running from package root where src is on sys.path
+
 	sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 	from audio_processing import audio_import, artifact_simulate, distortion_detection as dd
 
@@ -34,43 +36,86 @@ def list_files() -> List[str]:
 		print(f)
 	return files
 
-
 def detect(args):
-	data = loader.load_audio_file(args.file)
-	if data is None:
-		print("Failed to load audio")
-		return
-	y = data['data']
-	sr = data['samplerate']
+    # Build full path for loading audio
+    audio_path = os.path.join(loader.directory, args.file)
+    
+    # Load audio
+    data = loader.load_audio_file(args.file)
+    if data is None:
+        print(f"Failed to load {audio_path}")
+        return
 
-	cutouts = dd.detect_cutout(y, sr, threshold=args.cut_thresh, min_silence_duration_ms=args.min_silence_ms)
+    y = data['data']
+    sr = data['samplerate']
+    T = len(y) / sr
+    t = np.linspace(0, T, len(y))
+    amp = np.max(np.abs(y))
+    ymin, ymax = -1.05 * amp, 1.05 * amp
 
-	print(f"\nDetections for {args.file}:")
+    # Cutout detection
+    cutouts = dd.detect_cutout(
+        y, sr,
+        threshold=getattr(args, 'cut_thresh', 0.001),
+        min_silence_duration_ms=getattr(args, 'min_silence_ms', 50)
+    )
 
-	if cutouts:
-		print(" Cutout regions:")
-		for s, e in cutouts:
-			print(f"  - {s:.3f}s -> {e:.3f}s")
-		T = len(y) / sr
-		t = np.linspace(0, T, len(y))
-		amp = np.max(np.abs(y))
-		ymin, ymax = -1.05 * amp, 1.05 * amp
-		plt.figure(figsize=(12, 4))
-		plt.plot(t, y, color='steelblue', linewidth=0.6)
-		for s, e in cutouts:
-			plt.axvspan(s, e, color='purple', alpha=0.3, label='Cutout')
-		plt.title(f'Waveform with detected artifacts: {args.file}')
-		plt.ylim(ymin, ymax)
-		plt.xlabel('Time (s)')
-		plt.ylabel('Amplitude')
-		if cutouts:
-			handles = []
-			handles.append(plt.Line2D([0], [0], color='purple', lw=6, alpha=0.3, label='Cutout'))
-			plt.legend(handles=handles)
-		plt.tight_layout()
-		plt.show()
-	else:
-		print(" No cutouts detected.")
+    # Distortion detection (full path)
+    clip_thresh = getattr(args, 'clip_thresh', 0.98)
+    dist_summary = ddist.detect_distortion(
+        audio_path, clip_threshold=clip_thresh, plot=False
+    )
+
+    # Prepare distorted regions as (start, end) tuples
+    if dist_summary:
+        distorted_regions = dist_summary.get('distorted_regions_sec', [])
+        if len(distorted_regions) % 2 != 0:
+            # Drop last element if length is odd
+            distorted_regions = distorted_regions[:-1]
+        distorted_regions = [(distorted_regions[i], distorted_regions[i+1])
+                             for i in range(0, len(distorted_regions), 2)]
+    else:
+        distorted_regions = []
+
+    # Print summaries
+    print(f"\nDetections for {args.file}:")
+    if cutouts:
+        print(" Cutout regions:")
+        for s, e in cutouts:
+            print(f"  - {s:.3f}s -> {e:.3f}s")
+    else:
+        print(" No cutouts detected.")
+
+    if dist_summary:
+        print(f"\nDistortion Detections for {args.file}:")
+        print(f" Total Clipped Samples: {dist_summary.get('total_clipped_samples', 0)}")
+        print(f" Clipping Detected in {dist_summary.get('clip_ratio', 0)*100:.4f}% of samples")
+        print(f" Distorted Regions (first 10): {distorted_regions[:10]}")
+
+    # Plot waveform with overlays
+    plt.figure(figsize=(12,4))
+    plt.plot(t, y, color='steelblue', linewidth=0.6)
+
+    # Cutout regions
+    for s, e in cutouts:
+        plt.axvspan(s, e, color='purple', alpha=0.3, label='Cutout')
+
+    # Clipping regions
+    for s, e in distorted_regions[:10]:
+        plt.axvspan(s, e, color='red', alpha=0.3, label='Clipping')
+
+    # Remove duplicate labels
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = dict(zip(labels, handles))
+    plt.legend(by_label.values(), by_label.keys())
+
+    plt.title(f'Waveform with artifacts: {args.file}')
+    plt.ylim(ymin, ymax)
+    plt.xlabel('Time (s)')
+    plt.ylabel('Amplitude')
+    plt.tight_layout()
+    plt.show()
+
 
 def simulate(args):
 	"""Run artifact simulation (CLI wrapper).
@@ -131,7 +176,6 @@ def build_parser():
 
 	return p
 
-
 def main(argv=None):
 	# If argv is omitted (interactive), run a prompt loop. Otherwise parse CLI args.
 	if argv is None:
@@ -151,7 +195,6 @@ def main(argv=None):
 		detect(args)
 	elif args.cmd == 'visualize':
 		visualize(args)
-
 
 
 def interactive_loop():
@@ -187,18 +230,28 @@ def interactive_loop():
 				simulate(a)
 			except Exception as e:
 				print(f"Simulation failed: {e}")
+
 		elif choice == '3':
 			fname = input("Filename to detect on: ").strip()
-			class Args:
-				pass
+			class Args: pass
 			a = Args()
 			a.file = fname
-			a.cut_thresh = float(input("Cutout threshold (default 0.001): ").strip() or 0.001)
-			a.min_silence_ms = int(input("Min silence ms (default 50): ").strip() or 50)
+			# Safely parse float/int with defaults
+			try: a.cut_thresh = float(input("Cutout threshold (default 0.001): ").strip() or 0.001)
+			except: a.cut_thresh = 0.001
+			try: a.min_silence_ms = int(input("Min silence ms (default 50): ").strip() or 50)
+			except: a.min_silence_ms = 50
+			try: a.clip_thresh = float(input("Clip threshold (default 0.98): ").strip() or 0.98)
+			except: a.clip_thresh = 0.98
+			try: a.min_clip_ms = int(input("Min clip ms (default 10): ").strip() or 10)
+			except: a.min_clip_ms = 10
+
 			try:
 				detect(a)
 			except Exception as e:
 				print(f"Detection failed: {e}")
+
+		
 		elif choice == '4':
 			fname = input("Filename to visualize: ").strip()
 			class Args:
