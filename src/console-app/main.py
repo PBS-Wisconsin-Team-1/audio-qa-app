@@ -173,7 +173,19 @@ def interactive_loop():
 		if choice == '1':
 			list_files()
 		elif choice == '2':
-			inp = input("Input filename (in audio dir): ").strip()
+			files = loader.get_file_list()
+			if not files:
+				print("No audio files found.")
+				continue
+			print("Select input file:")
+			for i, f in enumerate(files):
+				print(f"  {i+1}) {f}")
+			inp_idx = input("Enter number: ").strip()
+			try:
+				inp = files[int(inp_idx)-1]
+			except Exception:
+				print("Invalid selection.")
+				continue
 			out = input("Output filename: ").strip()
 			seed = input("Seed (enter for 42): ").strip() or '42'
 			verbose = input("Verbose? (y/n): ").strip().lower().startswith('y')
@@ -189,7 +201,19 @@ def interactive_loop():
 			except Exception as e:
 				print(f"Simulation failed: {e}")
 		elif choice == '3':
-			fname = input("Filename to detect on: ").strip()
+			files = loader.get_file_list()
+			if not files:
+				print("No audio files found.")
+				continue
+			print("Select file to detect on:")
+			for i, f in enumerate(files):
+				print(f"  {i+1}) {f}")
+			inp_idx = input("Enter number: ").strip()
+			try:
+				fname = files[int(inp_idx)-1]
+			except Exception:
+				print("Invalid selection.")
+				continue
 			class Args:
 				pass
 			a = Args()
@@ -201,7 +225,19 @@ def interactive_loop():
 			except Exception as e:
 				print(f"Detection failed: {e}")
 		elif choice == '4':
-			fname = input("Filename to visualize: ").strip()
+			files = loader.get_file_list()
+			if not files:
+				print("No audio files found.")
+				continue
+			print("Select file to visualize:")
+			for i, f in enumerate(files):
+				print(f"  {i+1}) {f}")
+			inp_idx = input("Enter number: ").strip()
+			try:
+				fname = files[int(inp_idx)-1]
+			except Exception:
+				print("Invalid selection.")
+				continue
 			class Args:
 				pass
 			a = Args()
