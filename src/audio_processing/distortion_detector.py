@@ -12,9 +12,9 @@ import librosa.display
 import matplotlib.pyplot as plt
 import argparse
 
-def detect_distortion(filename, clip_threshold=0.98, plot=True):
+def detect_clipping(filename, clip_threshold=0.98, plot=True):
     """
-    Detects distortion in an audio file.
+    Detects clipping in an audio file.
 
     Parameters:
         filename (str): Path to the audio file.
