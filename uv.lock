@@ -30,7 +30,6 @@ name = "audio-qa-app"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "ipykernel" },
     { name = "librosa" },
     { name = "matplotlib" },
     { name = "pip" },

@@ -46,7 +46,7 @@ def detect_clipping(audio, sr, threshold=0.98, min_clip_duration_ms=10):
 
     return regions
 
-def detect_cutout(audio, sr, threshold=0.01, min_silence_duration_ms=20):
+def detect_cutout(audio, sr, threshold=0.001, min_silence_duration_ms=50):
     frame_length = int((min_silence_duration_ms * sr) / 1000)
     hop_length = frame_length // 2
     rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
