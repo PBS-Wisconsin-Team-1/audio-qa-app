@@ -44,6 +44,7 @@ def detect(args):
 	sr = data['samplerate']
 
 	cutouts = dd.detect_cutout(y, sr, threshold=args.cut_thresh, min_silence_duration_ms=args.min_silence_ms)
+    
 
 	print(f"\nDetections for {args.file}:")
 
