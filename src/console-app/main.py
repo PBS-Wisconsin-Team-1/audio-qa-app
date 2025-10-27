@@ -18,6 +18,7 @@ import numpy as np
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
+import threading
 #import distortion_detector as ddist
 
 try:
@@ -36,85 +37,87 @@ def list_files() -> List[str]:
 		print(f)
 	return files
 
-def detect(args):
-    # Build full path for loading audio
-    audio_path = os.path.join(loader.directory, args.file)
-    
-    # Load audio
-    data = loader.load_audio_file(args.file)
-    if data is None:
-        print(f"Failed to load {audio_path}")
-        return
+def detect(args, verbose=False):
+	# Build full path for loading audio
+	audio_path = os.path.join(loader.directory, args.file)
+	
+	# Load audio
+	data = loader.load_audio_file(args.file)
+	if data is None:
+		print(f"Failed to load {audio_path}")
+		return
 
-    y = data['data']
-    sr = data['samplerate']
-    T = len(y) / sr
-    t = np.linspace(0, T, len(y))
-    amp = np.max(np.abs(y))
-    ymin, ymax = -1.05 * amp, 1.05 * amp
+	y = data['data']
+	sr = data['samplerate']
+	T = len(y) / sr
+	t = np.linspace(0, T, len(y))
+	amp = np.max(np.abs(y))
+	ymin, ymax = -1.05 * amp, 1.05 * amp
 
-    # Cutout detection
-    cutouts = dd.detect_cutout(
-        y, sr,
-        threshold=getattr(args, 'cut_thresh', 0.001),
-        min_silence_duration_ms=getattr(args, 'min_silence_ms', 50)
-    )
+	# Cutout detection
+	cutouts = dd.detect_cutout(
+		y, sr,
+		threshold=getattr(args, 'cut_thresh', 0.001),
+		min_silence_duration_ms=getattr(args, 'min_silence_ms', 50)
+	)
 
-    # Distortion detection (full path)
-    clip_thresh = getattr(args, 'clip_thresh', 0.98)
-    dist_summary = dd.detect_clipping(
-        audio_path, clip_threshold=clip_thresh, plot=False
-    )
+	# Distortion detection (full path)
+	clip_thresh = getattr(args, 'clip_thresh', 0.98)
+	dist_summary = dd.detect_clipping(
+		y, sr, clip_threshold=clip_thresh, plot=False
+	)
 
-    # Prepare distorted regions as (start, end) tuples
-    if dist_summary:
-        distorted_regions = dist_summary.get('distorted_regions_sec', [])
-        # if len(distorted_regions) % 2 != 0:
-        #     # Drop last element if length is odd
-        #     distorted_regions = distorted_regions[:-1]
-        # distorted_regions = [(distorted_regions[i], distorted_regions[i+1])
-        #                      for i in range(0, len(distorted_regions), 2)]
-    else:
-        distorted_regions = []
+	# Prepare distorted regions as (start, end) tuples
+	if dist_summary:
+		distorted_regions = dist_summary.get('distorted_regions_sec', [])
+	else:
+		distorted_regions = []
 
-    # Print summaries
-    print(f"\nDetections for {args.file}:")
-    if cutouts:
-        print(" Cutout regions:")
-        for s, e in cutouts:
-            print(f"  - {s:.3f}s -> {e:.3f}s")
-    else:
-        print(" No cutouts detected.")
+	# Print summaries
+	if verbose:
+		print(f"\nDetections for {args.file}:")
+		if cutouts:
+			print(" Cutout regions:")
+			for s, e in cutouts:
+				print(f"  - {s:.3f}s -> {e:.3f}s")
+		else:
+			print(" No cutouts detected.")
 
-    if dist_summary:
-        print(f"\nDistortion Detections for {args.file}:")
-        print(f" Total Clipped Samples: {dist_summary.get('total_clipped_samples', 0)}")
-        print(f" Clipping Detected in {dist_summary.get('clip_ratio', 0)*100:.4f}% of samples")
-        print(f" Distorted Regions (first 10): {distorted_regions[:10]}")
+		if dist_summary:
+			print(f"\nDistortion Detections for {args.file}:")
+			print(f" Total Clipped Samples: {dist_summary.get('total_clipped_samples', 0)}")
+			print(f" Clipping Detected in {dist_summary.get('clip_ratio', 0)*100:.4f}% of samples")
+			print(f" Distorted Regions (first 10): {distorted_regions[:10]}")
 
-    # Plot waveform with overlays
-    plt.figure(figsize=(12,4))
-    plt.plot(t, y, color='steelblue', linewidth=0.6)
+	# Plot waveform with overlays
+	plt.figure(figsize=(12,4))
+	plt.plot(t, y, color='steelblue', linewidth=0.6)
 
-    # Cutout regions
-    for s, e in cutouts:
-        plt.axvspan(s, e, color='purple', alpha=0.3, label='Cutout')
+	# Cutout regions
+	for s, e in cutouts:
+		plt.axvspan(s, e, color='purple', alpha=0.3, label='Cutout')
 
-    # Clipping regions
-    for detection in distorted_regions:
-        plt.axvspan(detection, detection, color='red', alpha=0.3, label='Clipping')
+	# Clipping/distortion regions: support both (start,end) tuples and single timestamps
+	for region in distorted_regions:
+		if isinstance(region, (list, tuple)) and len(region) >= 2:
+			rs, re = region[0], region[1]
+		else:
+			# fallback to a tiny span if only a single time is provided
+			rs = float(region)
+			re = rs + 0.001
+		plt.axvspan(rs, re, color='red', alpha=0.3, label='Distortion')
 
-    # Remove duplicate labels
-    handles, labels = plt.gca().get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    plt.legend(by_label.values(), by_label.keys())
+	# Remove duplicate labels
+	handles, labels = plt.gca().get_legend_handles_labels()
+	by_label = dict(zip(labels, handles))
+	plt.legend(by_label.values(), by_label.keys())
 
-    plt.title(f'Waveform with artifacts: {args.file}')
-    plt.ylim(ymin, ymax)
-    plt.xlabel('Time (s)')
-    plt.ylabel('Amplitude')
-    plt.tight_layout()
-    plt.show()
+	plt.title(f'Waveform with artifacts: {args.file}')
+	plt.ylim(ymin, ymax)
+	plt.xlabel('Time (s)')
+	plt.ylabel('Amplitude')
+	plt.tight_layout()
+	plt.show()
 
 
 def simulate(args):
@@ -124,8 +127,61 @@ def simulate(args):
 	"""
 	aSim = artifact_simulate.ArtifactSim(directory=AUDIO_DIR)
 	try:
-		aSim.distort_audio(args.input, args.output, seed=getattr(args, 'seed', 42), verbose=getattr(args, 'verbose', False))
+		artifacts = aSim.distort_audio(args.input, args.output, seed=getattr(args, 'seed', 42), verbose=getattr(args, 'verbose', False))
 		print(f"Wrote distorted file: {args.output}")
+		# Plot the distorted file and overlay inserted artifacts (if any) in a background thread
+
+		try:
+			data = loader.load_audio_file(args.output)
+			if data is None:
+				print(f"Failed to load output file for plotting: {args.output}")
+				return
+			y = data['data']
+			sr = data['samplerate']
+			duration = len(y) / sr
+			time_axis = np.linspace(0, duration, len(y))
+			plt.figure(figsize=(12, 4))
+			plt.plot(time_axis, y, alpha=0.7, linewidth=0.6, color='blue')
+
+			# Highlight artifacts if available
+			if artifacts:
+				color_map = {
+					'click': 'red',
+					'pop': 'orange',
+					'cutout': 'purple',
+					'clipping': 'yellow'
+				}
+				for artifact in artifacts:
+					if artifact is None:
+						continue
+					# Support tuple/list or dict
+					if isinstance(artifact, (list, tuple)):
+						a_type = artifact[0] if len(artifact) > 0 else 'artifact'
+						timestamp = artifact[1] if len(artifact) > 1 else 0.0
+						duration_ms = artifact[2] if len(artifact) > 2 else 10
+					elif isinstance(artifact, dict):
+						a_type = artifact.get('type', 'artifact')
+						timestamp = artifact.get('timestamp', artifact.get('time', 0.0))
+						duration_ms = artifact.get('duration_ms', artifact.get('duration', 10))
+					else:
+						# Unknown format; skip
+						continue
+					duration_sec = (duration_ms or 0) / 1000.0
+					color = color_map.get(a_type, 'gray')
+					plt.axvspan(timestamp, timestamp + duration_sec, color=color, alpha=0.3, label=a_type)
+
+			plt.title(f"{args.output} waveform with simulated artifacts")
+			plt.xlabel("Time (seconds)")
+			plt.ylabel("Amplitude")
+			plt.grid(True, alpha=0.3)
+			handles, labels = plt.gca().get_legend_handles_labels()
+			by_label = dict(zip(labels, handles))
+			if by_label:
+				plt.legend(by_label.values(), by_label.keys(), loc='upper right')
+			plt.tight_layout()
+			plt.show()
+		except Exception as e:
+			print(f"Error plotting simulated file: {e}")
 	except Exception as e:
 		print(f"Simulation failed: {e}")
 

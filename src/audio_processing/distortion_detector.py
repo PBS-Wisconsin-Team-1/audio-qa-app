@@ -12,7 +12,7 @@ import librosa.display
 import matplotlib.pyplot as plt
 import argparse
 
-def detect_clipping(filename, clip_threshold=0.98, plot=True):
+def detect_clipping(audio, sr, clip_threshold=0.98, plot=True):
     """
     Detects clipping in an audio file.
 
@@ -24,22 +24,20 @@ def detect_clipping(filename, clip_threshold=0.98, plot=True):
     Returns:
         dict: Summary of distortion analysis.
     """
-    # Load audio
-    y, sr = librosa.load(filename, sr=None)
 
     # Normalize audio
-    y = y / np.max(np.abs(y))
+    audio = audio / np.max(np.abs(audio))
 
     # Detect clipping
-    clipped = np.abs(y) > clip_threshold
-    clip_ratio = np.sum(clipped) / len(y)
+    clipped = np.abs(audio) > clip_threshold
+    clip_ratio = np.sum(clipped) / len(audio)
 
     # Clipped sample times 
     clipped_frames = np.where(clipped)[0]
     clipped_times = clipped_frames / sr
 
     # Spectral analysis (centroid) 
-    spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
+    spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sr)[0]
     frames = range(len(spectral_centroid))
     t = librosa.frames_to_time(frames, sr=sr)
     threshold = np.mean(spectral_centroid) + 2 * np.std(spectral_centroid)
@@ -48,7 +46,7 @@ def detect_clipping(filename, clip_threshold=0.98, plot=True):
     # Visualization
     if plot:
         plt.figure(figsize=(12, 5))
-        librosa.display.waveshow(y, sr=sr, alpha=0.6)
+        librosa.display.waveshow(audio, sr=sr, alpha=0.6)
         plt.scatter(clipped_times, np.ones_like(clipped_times)*0.9, color='r', s=5, label='Clipping')
         plt.title("Distortion Detection: Clipped Samples Highlighted")
         plt.xlabel("Time (s)")
@@ -60,7 +58,7 @@ def detect_clipping(filename, clip_threshold=0.98, plot=True):
     summary = {
         "filename": filename,
         "sampling_rate": sr,
-        "duration_sec": librosa.get_duration(y=y, sr=sr),
+        "duration_sec": librosa.get_duration(y=audio, sr=sr),
         "total_clipped_samples": np.sum(clipped),
         "clip_ratio": clip_ratio,
         "distorted_regions_sec": distorted_regions[:10]  # first 10 regions

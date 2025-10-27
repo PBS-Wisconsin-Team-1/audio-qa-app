@@ -17,7 +17,7 @@ def index_to_time(index: int, sr: int) -> float:
         raise ValueError("Index must be non-negative")
     return index / float(sr)
 
-def detect_clipping(filename, clip_threshold=0.98, verbose=False, plot=False):
+def detect_clipping(audio, sr, clip_threshold=0.98, verbose=False, plot=False):
     """
     Detects clipping in an audio file.
 
@@ -29,22 +29,20 @@ def detect_clipping(filename, clip_threshold=0.98, verbose=False, plot=False):
     Returns:
         dict: Summary of distortion analysis.
     """
-    # Load audio
-    y, sr = librosa.load(filename, sr=None)
 
     # Normalize audio
-    y = y / np.max(np.abs(y))
+    audio = audio / np.max(np.abs(audio))
 
     # Detect clipping
-    clipped = np.abs(y) > clip_threshold
-    clip_ratio = np.sum(clipped) / len(y)
+    clipped = np.abs(audio) > clip_threshold
+    clip_ratio = np.sum(clipped) / len(audio)
 
     # Clipped sample times 
     clipped_frames = np.where(clipped)[0]
     clipped_times = clipped_frames / sr
 
     # Spectral analysis (centroid) 
-    spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
+    spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sr)[0]
     frames = range(len(spectral_centroid))
     t = librosa.frames_to_time(frames, sr=sr)
     threshold = np.mean(spectral_centroid) + 2 * np.std(spectral_centroid)
@@ -63,9 +61,8 @@ def detect_clipping(filename, clip_threshold=0.98, verbose=False, plot=False):
 
     # Summary 
     summary = {
-        "filename": filename,
         "sampling_rate": sr,
-        "duration_sec": librosa.get_duration(y=y, sr=sr),
+        "duration_sec": librosa.get_duration(y=audio, sr=sr),
         "total_clipped_samples": np.sum(clipped),
         "clip_ratio": clip_ratio,
         "distorted_regions_sec": distorted_regions  # all regions
