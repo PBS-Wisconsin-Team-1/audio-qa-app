@@ -8,58 +8,70 @@ This application leverages machine learning and natural language processing to a
 
 ## Prerequisites
 
-- Python 3.10 or higher
-- [uv](https://github.com/astral-sh/uv) package manager
+Python 3.10 or higher
 
-## Installation with uv (Optional)
+## Installation (Can use uv but not explicitly shown below)
 
-### 1. Install uv (if not already installed)
+1. Clone the repository:
+	```bash
+	git clone https://github.com/PBS-Wisconsin-Team-1/audio-qa-app.git
+	cd audio-qa-app
+	```
 
-#### Windows (PowerShell)
-```powershell
-powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
+2. Create and activate a virtual environment:
+	```bash
+	python -m venv .venv
+	# On Windows (PowerShell)
+	.venv\Scripts\Activate.ps1
+	# On Windows (Command Prompt)
+	.venv\Scripts\activate.bat
+	# On macOS/Linux
+	source .venv/bin/activate
+	```
 
-#### macOS/Linux
+3. Install dependencies:
+	```bash
+	pip install -r requirements.txt
+	```
+
+## Usage
+
+### Run the Interactive Console App
+
+Navigate to the `src/console_app` folder:
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
+cd src/console_app
 ```
-
-### 2. Clone the repository
+Run the interactive console app:
 ```bash
-git clone https://github.com/PBS-Wisconsin-Team-1/audio-qa-app.git
-cd audio-qa-app
+python main.py
 ```
 
-### 3. Create and activate virtual environment
+### Run the Job Queue CLI
+
+Navigate to the `src/job_queue` folder:
 ```bash
-# Create virtual environment
-uv venv
-
-# Activate virtual environment
-# On Windows (PowerShell)
-.venv\Scripts\Activate.ps1
-
-# On Windows (Command Prompt)
-.venv\Scripts\activate.bat
-
-# On macOS/Linux
-source .venv/bin/activate
+cd src/job_queue
 ```
-
-### 4. Install dependencies
+Run the job queue CLI:
 ```bash
-# Install production dependencies
-uv pip install -r requirements.txt
-
-# Or install the project in development mode with dev dependencies
-uv pip install -e .[dev]
+python queue.py
 ```
+
+Follow the prompts to queue jobs for audio detection or artifact simulation.
+
+**Note:** Ensure Redis is running locally (default settings) before using job queue features.
+
+To start an RQ worker (in a separate terminal, from the project root):
+```bash
+rq worker
+```
+
+This will process jobs you queue from the CLI.
 
 ## Acknowledgments
 
 - Built by PBS Wisconsin Team 1
-- Powered by state-of-the-art machine learning models
 - Thanks to the open-source community for the tools and libraries
 
 ## Roadmap
