@@ -1,7 +1,7 @@
-<<<<<<< HEAD
 # Virtual environment
 .venv/
 venv/
+audioenv/
 
 # Python
 __pycache__/
@@ -79,15 +79,6 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -138,6 +129,6 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-=======
-audioenv/
->>>>>>> c7173b0 (Add audio-testing notebook, sample audio files, and requirements)
+
+# Redis database file
+dump.rdb

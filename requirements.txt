@@ -1,6 +1,7 @@
 
 # Core dependencies for project
 # python_version >= "3.10"
+# requires redis server can be installed here: https://github.com/tporadowski/redis/releases
 numpy>=1.24.0
 librosa>=0.10.0
 matplotlib>=3.7.0
@@ -8,6 +9,7 @@ scipy>=1.15.3
 pydub>=0.25.1
 redis>=5.0.0,<6.0.0
 rq>=1.16,<2.0
+rq-dashboard>=1.15.0,<2.0
 
 # Development dependencies
 # [dev]
