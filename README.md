@@ -69,6 +69,56 @@ rq worker
 
 This will process jobs you queue from the CLI.
 
+### Redis Server Setup (Required for Job Queue and Dashboard)
+
+You must have a Redis server running for the job queue and dashboard features to work.
+
+#### Windows
+1. Download Redis for Windows from: https://github.com/tporadowski/redis/releases
+2. Extract the zip to a folder (e.g., `C:\Redis`).
+3. Start the server:
+   ```powershell
+   cd C:\Redis
+   .\redis-server.exe
+   ```
+
+#### macOS (Homebrew)
+```bash
+brew install redis
+brew services start redis
+```
+
+#### Ubuntu/Debian
+```bash
+sudo apt update
+sudo apt install redis-server
+sudo service redis-server start
+```
+
+The default connection is `localhost:6379`. If you use a different host/port, set the connection in your Python code or with environment variables.
+
+You can now use the job queue CLI and run `rq-dashboard` to monitor jobs.
+
+### One-Command Startup Scripts
+
+You can use the provided scripts in the `scripts` folder to start Redis, the RQ dashboard, and the job queue CLI together:
+
+#### Windows (PowerShell)
+From the project root, run:
+```powershell
+./scripts/start_all.ps1
+```
+This will open new windows for the Redis server, RQ dashboard, and the job queue CLI (make sure to adjust the Redis server path in the script if needed).
+
+#### macOS/Linux (Bash)
+From the project root, run:
+```bash
+bash scripts/start_all.sh
+```
+This will start all services (Redis, dashboard, CLI) in the background except for the CLI, which will run in your current terminal.
+
+Make sure you have the necessary permissions to execute these scripts (you may need to run `chmod +x scripts/start_all.sh` on macOS/Linux).
+
 ## Acknowledgments
 
 - Built by PBS Wisconsin Team 1
