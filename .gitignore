@@ -132,3 +132,6 @@ yarn-error.log*
 
 # Redis database file
 dump.rdb
+
+# Temporary scripts folder
+/scripts/tmp
