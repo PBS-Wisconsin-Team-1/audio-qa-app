@@ -31,38 +31,37 @@ To start all services (Redis, RQ dashboard, workers, job queue CLI) at once, use
 
 **Windows (PowerShell):**
 ```powershell
-./scripts/start_all.ps1
+cd scripts
+./start_all.ps1
 ```
 
 **macOS/Linux:**
 ```bash
-bash scripts/start_all.sh
+cd scripts
+bash start_all.sh
 ```
+After starting, view the RQ dashboard at: [http://localhost:9181](http://localhost:9181)
+
 
 To stop all services:
 
 **Windows:**
 ```powershell
-./scripts/stop_all.ps1
+./stop_all.ps1
 ```
 **macOS/Linux:**
 ```bash
-bash scripts/stop_all.sh
+bash stop_all.sh
 ```
 
 ## Dashboard & Monitoring
 
-After starting, view the RQ dashboard at: [http://localhost:9181](http://localhost:9181)
+
 
 You can also run the interactive console app:
 ```bash
 cd src/console_app
 python main.py
-```
-Or the job queue CLI:
-```bash
-cd src/job_queue
-python queue.py
 ```
 
 ---
