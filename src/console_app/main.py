@@ -58,13 +58,13 @@ def detect(args, verbose=False):
 	cutouts = dd.detect_cutout(
 		y, sr,
 		threshold=getattr(args, 'cut_thresh', 0.001),
-		min_silence_duration_ms=getattr(args, 'min_silence_ms', 50)
+		min_len=getattr(args, 'min_silence_ms', 50)
 	)
 
 	# Distortion detection (full path)
 	clip_thresh = getattr(args, 'clip_thresh', 0.98)
 	dist_summary = dd.detect_clipping(
-		y, sr, clip_threshold=clip_thresh, plot=False
+		y, sr, threshold=clip_thresh, summary=True
 	)
 
 	# Prepare distorted regions as (start, end) tuples

@@ -99,25 +99,40 @@ The default connection is `localhost:6379`. If you use a different host/port, se
 
 You can now use the job queue CLI and run `rq-dashboard` to monitor jobs.
 
-### One-Command Startup Scripts
 
-You can use the provided scripts in the `scripts` folder to start Redis, the RQ dashboard, and the job queue CLI together:
+### One-Command Startup & Cleanup Scripts
+
+You can use the provided scripts in the `scripts` folder to start and stop all related services (Redis, RQ dashboard, workers, and the job queue CLI) together. These scripts manage process IDs and ensure a clean startup and shutdown.
 
 #### Windows (PowerShell)
 From the project root, run:
 ```powershell
 ./scripts/start_all.ps1
 ```
-This will open new windows for the Redis server, RQ dashboard, and the job queue CLI (make sure to adjust the Redis server path in the script if needed).
+This will open new PowerShell windows for the Redis server, RQ dashboard, RQ workers, and the job queue CLI. All process IDs are tracked in `scripts/tmp/auqa-pids.txt`.
+
+To stop all started processes, run:
+```powershell
+./scripts/stop_all.ps1
+```
+This will recursively terminate all processes started by `start_all.ps1` (including any child processes) and clean up the PID file.
 
 #### macOS/Linux (Bash)
 From the project root, run:
 ```bash
 bash scripts/start_all.sh
 ```
-This will start all services (Redis, dashboard, CLI) in the background except for the CLI, which will run in your current terminal.
+This will start all services (Redis, dashboard, workers, CLI) in new terminal windows and record their PIDs in `scripts/tmp/auqa-pids.txt`.
 
-Make sure you have the necessary permissions to execute these scripts (you may need to run `chmod +x scripts/start_all.sh` on macOS/Linux).
+To stop all started processes, run:
+```bash
+bash scripts/stop_all.sh
+```
+This will recursively terminate all processes started by `start_all.sh` and clean up the PID file.
+
+Make sure you have the necessary permissions to execute these scripts (you may need to run `chmod +x scripts/start_all.sh scripts/stop_all.sh` on macOS/Linux).
+
+**Note:** If you manually close a window or process, it may not be removed from the PID file. Running the stop script is the recommended way to clean up all related processes.
 
 ## Acknowledgments
 

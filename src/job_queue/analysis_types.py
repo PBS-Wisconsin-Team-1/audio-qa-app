@@ -6,11 +6,11 @@ USER_JOB_TYPES = {
 }
 
 ANALYSIS_TYPES = {
-    "detect_clipping": {
+    "Clipping": {
         "params": {"threshold": float},
         "func": detect_clipping
     },
-    "detect_cutouts": {
+    "Cutout": {
         "params": {"threshold": float, "min_len": int},
         "func": detect_cutout
     }
