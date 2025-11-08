@@ -40,7 +40,6 @@ class AudioDetectionJob:
         print(f"Running detection {type} on {self.audio_file}")
         det_result = ANALYSIS_TYPES[type]['func'](self.audio['data'], self.audio['samplerate'], **params)
         params = fill_default_params(ANALYSIS_TYPES[type]['func'], params)
-        print("params", params)
         for det in det_result:
             if isinstance(det, tuple):
                 detection = Detection(start=det[0], end=det[1], type=type, params=params)
@@ -79,7 +78,6 @@ class AudioDetectionJob:
 
         while redis_conn.llen(f"results:{self.audio_base}_{self.start_timestamp}") > 0:
             det_str = redis_conn.lpop(f"results:{self.audio_base}_{self.start_timestamp}").decode('utf-8')
-            print("dets:", det_str)
             detection = Detection.det_from_string(det_str)
             results.append(detection)
         
