@@ -22,7 +22,7 @@ Add-Content $pidFile $p2.Id
 # Start RQ Workers in new PowerShell windows with -PROCESS AUQA marker
 for ($i = 1; $i -le $workers; $i++) {
     $title = "AUQA-WORKER-$i"
-    $cmd = "[console]::Title = '$title'; cd '$jobQueueDir'; rq worker"
+    $cmd = "[console]::Title = '$title'; cd '$jobQueueDir'; rq worker --worker-class rq.SimpleWorker"
     $pw = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", $cmd -WindowStyle Normal -PassThru
     Add-Content $pidFile $pw.Id
 }

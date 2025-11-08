@@ -1,13 +1,18 @@
+import os
 import redis
 from rq import Queue
 from audio_processing.audio_import import AudioLoader
 from worker import AudioDetectionJob, simulate_artifacts
 from analysis_types import USER_JOB_TYPES, ANALYSIS_TYPES
+import multiprocessing
+
+AUDIO_DIR = os.path.join("..", "..", "audio_files")
 
 def main():
-
-    loader = AudioLoader()
-    job_queue = Queue(connection=redis.Redis())
+    multiprocessing.set_start_method("spawn", force=True)
+    loader = AudioLoader(directory=AUDIO_DIR)
+    redis_conn = redis.Redis()
+    job_queue = Queue(connection=redis_conn)
 
     print("Audio QA Job Queue CLI")
     while True:
@@ -19,11 +24,9 @@ def main():
 
         if choice == "1":
             print("Available detection types:")
-            for i, (det_type, params) in enumerate(ANALYSIS_TYPES.items(), 1):
-                param_list = ', '.join(f"{k}:{v.__name__}" for k, v in params.items())
-                print(f"  {i}. {det_type} ({param_list})")
+            for i, det_type in enumerate(ANALYSIS_TYPES.keys(), 1):
+                print(f"  {i}. {det_type}")
             det_indices = input("Enter detection type numbers to run (comma-separated): ").strip().split(",")
-            detection_types = []
             detection_params = {}
             for idx in det_indices:
                 try:
@@ -32,9 +35,8 @@ def main():
                 except (ValueError, IndexError):
                     print(f"Invalid detection type index: {idx+1}")
                     continue
-                detection_types.append(det_type)
                 param_dict = {}
-                for param, param_type in ANALYSIS_TYPES[det_type].items():
+                for param, param_type in ANALYSIS_TYPES[det_type]['params'].items():
                     val = input(f"Enter value for {det_type} parameter '{param}' ({param_type.__name__}): ")
                     try:
                         param_dict[param] = param_type(val)
@@ -55,8 +57,8 @@ def main():
                 except (ValueError, IndexError):
                     print(f"Invalid file index: {idx+1}")
             for audio_file_path in selected_files:
-                job = AudioDetectionJob(job_queue, loader)
-                job.load_and_queue(audio_file_path, detection_types, detection_params)
+                job = AudioDetectionJob(loader, audio_file_path)
+                job_queue.enqueue(job.load_and_queue, detection_params)
                 print(f"Queued detection job for {audio_file_path}")
 
         elif choice == "2":

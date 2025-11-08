@@ -17,7 +17,7 @@ def index_to_time(index: int, sr: int) -> float:
         raise ValueError("Index must be non-negative")
     return index / float(sr)
 
-def detect_clipping(audio, sr, clip_threshold=0.98, verbose=False, plot=False):
+def detect_clipping(audio, sr, threshold=0.98):
     """
     Detects clipping in an audio file.
 
@@ -34,7 +34,7 @@ def detect_clipping(audio, sr, clip_threshold=0.98, verbose=False, plot=False):
     audio = audio / np.max(np.abs(audio))
 
     # Detect clipping
-    clipped = np.abs(audio) > clip_threshold
+    clipped = np.abs(audio) > threshold
     clip_ratio = np.sum(clipped) / len(audio)
 
     # Clipped sample times 
@@ -48,39 +48,10 @@ def detect_clipping(audio, sr, clip_threshold=0.98, verbose=False, plot=False):
     threshold = np.mean(spectral_centroid) + 2 * np.std(spectral_centroid)
     distorted_regions = t[spectral_centroid > threshold]
 
-    # # Visualization
-    # if plot:
-    #     plt.figure(figsize=(12, 5))
-    #     librosa.display.waveshow(y, sr=sr, alpha=0.6)
-    #     plt.scatter(clipped_times, np.ones_like(clipped_times)*0.9, color='r', s=5, label='Clipping')
-    #     plt.title("Distortion Detection: Clipped Samples Highlighted")
-    #     plt.xlabel("Time (s)")
-    #     plt.ylabel("Amplitude")
-    #     plt.legend()
-    #     plt.show()
+    return distorted_regions
 
-    # Summary 
-    summary = {
-        "sampling_rate": sr,
-        "duration_sec": librosa.get_duration(y=audio, sr=sr),
-        "total_clipped_samples": np.sum(clipped),
-        "clip_ratio": clip_ratio,
-        "distorted_regions_sec": distorted_regions  # all regions
-    }
-
-    if verbose:
-        print("=== Distortion Summary ===")
-        print(f"File: {summary['filename']}")
-        print(f"Sampling Rate: {summary['sampling_rate']} Hz")
-        print(f"Duration: {summary['duration_sec']:.2f} seconds")
-        print(f"Total Clipped Samples: {summary['total_clipped_samples']}")
-        print(f"Clipping Detected in {summary['clip_ratio']*100:.4f}% of samples")
-        print(f"Distorted Regions (first 10): {summary['distorted_regions_sec']} seconds")
-
-    return summary
-
-def detect_cutout(audio, sr, threshold=0.001, min_silence_duration_ms=50):
-    frame_length = int((min_silence_duration_ms * sr) / 1000)
+def detect_cutout(audio, sr, threshold=0.001, min_len=50):
+    frame_length = int((min_len * sr) / 1000)
     hop_length = frame_length // 2
     rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]
     duration_s = len(audio) / float(sr)

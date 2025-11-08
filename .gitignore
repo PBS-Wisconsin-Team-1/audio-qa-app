@@ -124,6 +124,12 @@ audio_files/*
 !audio_files/ex1.wav
 !audio_files/ex1_distorted.wav
 
+# Detection results
+# Track the detection_results folder but ignore its contents
+detection_results/*
+!detection_results/example_YYYY-MM-DD_HH-MM-SS/
+!detection_results/example_YYYY-MM-DD_HH-MM-SS/ex1_distorted_report.json
+
 # Node.js (if using any JavaScript/Node components)
 node_modules/
 npm-debug.log*
