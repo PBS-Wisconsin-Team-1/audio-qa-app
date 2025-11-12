@@ -1,0 +1,80 @@
+.queue-progress {
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.queue-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.queue-progress-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.queue-progress-count {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.queue-progress-bar-container {
+  width: 100%;
+  height: 24px;
+  background-color: #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.queue-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4a90e2 0%, #357abd 100%);
+  transition: width 0.3s ease;
+  border-radius: 12px;
+}
+
+.queue-progress-details {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.queue-status-item {
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.queue-status-item.queued {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.queue-status-item.in-progress {
+  background-color: #cfe2ff;
+  color: #084298;
+}
+
+.queue-status-item.completed {
+  background-color: #d1e7dd;
+  color: #0f5132;
+}
+
+.queue-progress-empty {
+  color: #999;
+  font-size: 14px;
+  margin: 0;
+  text-align: center;
+  padding: 10px 0;
+}
+

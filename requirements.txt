@@ -9,7 +9,9 @@ scipy>=1.15.3
 pydub>=0.25.1
 redis>=5.0.0,<6.0.0
 rq>=1.16,<2.0
-rq-dashboard>=1.15.0,<2.0
+rq-dashboard>=0.8.0
+flask>=3.0.0
+flask-cors>=4.0.0
 
 # Development dependencies
 # [dev]

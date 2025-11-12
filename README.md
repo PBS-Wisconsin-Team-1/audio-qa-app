@@ -64,5 +64,50 @@ cd src/console_app
 python main.py
 ```
 
+## Frontend (React Web App)
+
+The React frontend provides a web interface for viewing detection results and managing audio files.
+
+### Setup
+
+1. Install Node.js dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Start the Flask API server (in a separate terminal):
+```bash
+# Option 1: From project root
+python src/api_server.py
+
+# Option 2: Use helper script (from project root)
+./scripts/start_api.sh
+# On Windows:
+# .\scripts\start_api.ps1
+```
+
+3. Start the React development server:
+```bash
+cd frontend
+npm start
+```
+
+The frontend will be available at [http://localhost:3000](http://localhost:3000)
+
+**Note:** The API server runs on port 5001 by default (instead of 5000) to avoid conflicts with macOS AirPlay Receiver. If you need to use a different port, set the `API_PORT` environment variable or update the frontend's `.env` file.
+
+### Features
+
+- **Gallery View**: Browse all processed audio files with issue counts
+- **Queue Progress**: Real-time monitoring of job queue status
+- **File Upload**: Upload audio files for processing (optional)
+- **Issue Detection**: View detailed detection results including:
+  - Issue type (Clipping, Cutout, etc.)
+  - Timing information (start/end times)
+  - Detection parameters
+  - Detailed descriptions
+- **Export Reports**: Download text file summaries of all detected issues
+
 ---
 For more details, see the [GitHub repository](https://github.com/PBS-Wisconsin-Team-1/audio-qa-app).
