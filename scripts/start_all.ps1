@@ -2,7 +2,6 @@ param(
     [int]$workers = 1
 )
 
-
 $redisPath = "C:\Program Files\Redis\redis-server.exe"
 $jobQueueDir = "..\src\job_queue"
 $pidDir = Join-Path $PSScriptRoot 'tmp'
@@ -28,5 +27,6 @@ for ($i = 1; $i -le $workers; $i++) {
 }
 
 # Start Client CLI in new PowerShell window with -PROCESS AUQA marker
+Start-Sleep -Seconds 3
 ${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-CLIENT'; cd '$jobQueueDir'; python queue_cli.py" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p3.Id

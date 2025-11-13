@@ -28,6 +28,7 @@ for i in $(seq 1 $WORKERS); do
 done
 
 # Start the queue consumer in a new terminal window with a unique title and record its PID
+sleep 3
 gnome-terminal --title="AUQA-QUEUER" -- bash -c "cd $JOB_QUEUE_DIR && python queue_cli.py; exec bash" 2>/dev/null &
 QUEUER_PID=$!
 echo $QUEUER_PID >> "$PID_FILE"
