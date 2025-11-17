@@ -1,6 +1,5 @@
 import os
 import librosa
-import numpy as np
 from pydub import AudioSegment
 
 # default location for audio files is in "audio-qa-app/audio_files"

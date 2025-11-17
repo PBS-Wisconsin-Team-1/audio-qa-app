@@ -1,5 +1,6 @@
 import os
 import json
+import traceback
 import redis
 from audio_processing.audio_import import AudioLoader
 from audio_processing.utils import Detection, seconds_to_mmss, fill_default_params
@@ -23,17 +24,25 @@ class AudioDetectionJob:
         self.start_timestamp = int(datetime.now().timestamp())
 
     def load_and_queue(self, analyses: dict):
-        redis_conn = redis.from_url(self.redis_url)
-        job_queue = Queue(connection=redis_conn)
-        self.audio = self.loader.load_audio_file(self.audio_file)
+        try:
+            redis_conn = redis.from_url(self.redis_url)
+            job_queue = Queue(connection=redis_conn)
+            
+            print(f"Loading audio file: {self.audio_file}")
+            self.audio = self.loader.load_audio_file(self.audio_file)
 
-        for analysis_type in analyses.keys():
-            self.job_ids.append(f"{self.audio_base}_{analysis_type}_{self.start_timestamp}")
-            redis_conn.hset("job_status", f"{self.audio_base}_{analysis_type}_{self.start_timestamp}", "queued")
+            for analysis_type in analyses.keys():
+                self.job_ids.append(f"{self.audio_base}_{analysis_type}_{self.start_timestamp}")
+                redis_conn.hset("job_status", f"{self.audio_base}_{analysis_type}_{self.start_timestamp}", "queued")
 
-        for analysis_type, analysis_params in analyses.items():
-            job_queue.enqueue(self.run_detection, analysis_type, analysis_params)
-        return
+            print(f"Queueing detection jobs for: {self.audio_file}")
+            for analysis_type, analysis_params in analyses.items():
+                job_queue.enqueue(self.run_detection, analysis_type, analysis_params)
+            return
+        except Exception as e:
+            print(f"[ERROR] Exception in load_and_queue: {e}")
+            traceback.print_exc()
+            raise  # Optionally re-raise to let RQ mark the job as failed
         
     def run_detection(self, type: str, params: dict):
         redis_conn = redis.from_url(self.redis_url)
