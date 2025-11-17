@@ -14,8 +14,8 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
 # Configuration
-DETECTION_RESULTS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'detection_results')
-AUDIO_FILES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'audio_files')
+DETECTION_RESULTS_DIR = os.path.join('..', '..', 'detection_results')
+AUDIO_FILES_DIR = os.path.join('..', '..', 'audio_files')
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
 def get_processed_files():

@@ -1,5 +1,6 @@
 param(
-    [int]$workers = 1
+    [int]$workers = 1,
+    [switch]$dashboard
 )
 
 $redisPath = "C:\Program Files\Redis\redis-server.exe"
@@ -16,9 +17,16 @@ ${p1} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[cons
 Add-Content $pidFile $p1.Id
 
 
-# Start RQ Dashboard in new PowerShell window using venv Python
-${p2} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-DASHBOARD'; python -m rq_dashboard" -WindowStyle Normal -PassThru
-Add-Content $pidFile $p2.Id
+
+# Optionally start RQ Dashboard
+if ($dashboard) {
+    ${p2} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-DASHBOARD'; python -m rq_dashboard" -WindowStyle Normal -PassThru
+    Add-Content $pidFile $p2.Id
+}
+
+# Start API server in new PowerShell window using venv Python
+${p_api} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-API'; cd '$jobQueueDir'; python api_server.py" -WindowStyle Normal -PassThru
+Add-Content $pidFile $p_api.Id
 
 # Start RQ Workers in new PowerShell windows sourcing venv
 for ($i = 1; $i -le $workers; $i++) {
