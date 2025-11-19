@@ -26,7 +26,6 @@ if ($dashboard) {
 
 # Start API server in new PowerShell window using venv Python
 ${p_api} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-API'; cd '$jobQueueDir'; python api_server.py" -WindowStyle Normal -PassThru
-Add-Content $pidFile $p_api.Id
 
 # Start RQ Workers in new PowerShell windows sourcing venv
 for ($i = 1; $i -le $workers; $i++) {
