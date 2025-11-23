@@ -22,7 +22,7 @@ class Detection:
                 return f'Less than {self.params["threshold"]} RMS detected for at least {self.params["min_len"]} ms'
 
             case "Clipping":
-                return f'Greater than {self.params["threshold"]} amplitude detected'
+                return f"Detected using clipdetect library's ClipDaT algorithm implementation"
 
     def __lt__(self, other: "Detection") -> bool:
         return self.start < other.start
