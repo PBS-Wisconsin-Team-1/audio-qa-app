@@ -37,8 +37,6 @@ done
 # Start API server in a new terminal window with a unique title and record its PID
 API_DIR="$SCRIPT_DIR/../src"
 gnome-terminal --title="AUQA-API" -- bash -c "cd $API_DIR && python api_server.py; exec bash" 2>/dev/null &
-API_PID=$!
-echo $API_PID >> "$PID_FILE"
 
 # Start the queue consumer in a new terminal window with a unique title and record its PID
 sleep 3

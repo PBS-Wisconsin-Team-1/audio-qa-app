@@ -12,6 +12,7 @@ rq>=1.16,<2.0
 rq-dashboard>=0.8.0
 flask>=3.0.0
 flask-cors>=4.0.0
+clipdetect>=1.1.7
 
 # Development dependencies
 # [dev]
