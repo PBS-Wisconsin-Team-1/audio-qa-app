@@ -13,13 +13,11 @@
   },
   {
     "type": "Clipping",
-    "start": 0.7662585034013606,
-    "end": null,
-    "params": {
-      "threshold": 0.98
-    },
-    "start_mmss": "00:00.77",
-    "end_mmss": "N/A",
-    "details": "Greater than 0.98 amplitude detected"
+    "start": 1.0526077097505668,
+    "end": 1.0526530612244898,
+    "params": {},
+    "start_mmss": "00:01.05",
+    "end_mmss": "00:01.05",
+    "details": "Detected using clipdetect library's ClipDaT algorithm implementation"
   }
 ]
