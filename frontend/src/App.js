@@ -73,7 +73,13 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Audio Quality Assurance</h1>
+        <div className="app-header-titles">
+          <h1>
+            <img src="/icons/favicon.svg" alt="AuQA Logo" className="app-logo" />
+            <strong>AuQA</strong>
+          </h1>
+          <h2>Audio Quality Assurance Application</h2>
+        </div>
         <button
           className="app-upload-toggle"
           onClick={() => setShowUpload(!showUpload)}

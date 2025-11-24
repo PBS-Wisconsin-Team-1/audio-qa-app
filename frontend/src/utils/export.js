@@ -2,7 +2,7 @@
  * Generate a text summary of all detected issues
  */
 export const generateTextSummary = (fileName, detections) => {
-  let summary = `Audio Quality Assurance Report\n`;
+  let summary = `AuQA Report\n`;
   summary += `================================\n\n`;
   summary += `File: ${fileName}\n`;
   summary += `Generated: ${new Date().toLocaleString()}\n\n`;

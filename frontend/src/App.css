@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Stylish&display=swap');
+
 .app {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -12,10 +14,32 @@
   align-items: center;
 }
 
+.app-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .app-header h1 {
-  font-size: 28px;
+  font-size: 35px;
   font-weight: 600;
+  font-family: 'Stylish', sans-serif1;
   color: #333;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-logo {
+  height: 35px;
+  width: auto;
+}
+
+.app-header h2 {
+  font-size: 18px;
+  font-weight: 400;
+  color: #666;
   margin: 0;
 }
 
@@ -25,7 +49,7 @@
   border: none;
   border-radius: 6px;
   padding: 10px 20px;
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   cursor: pointer;
   transition: background-color 0.2s ease;
