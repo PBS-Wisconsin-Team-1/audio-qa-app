@@ -1,6 +1,8 @@
 
 # Audio QA App (Quick Start)
 
+![AuQA Screenshot](assets/AuQA_screenshot.png)
+
 ## Install Dependencies
 
 1. Clone the repository and enter the directory:
