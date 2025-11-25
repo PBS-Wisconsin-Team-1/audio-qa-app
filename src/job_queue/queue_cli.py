@@ -12,7 +12,10 @@ import multiprocessing
 from typing import List
 
 
-AUDIO_DIR = os.path.join("..", "..", "audio_files")
+# Get the project root directory (two levels up from this file)
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+AUDIO_DIR = os.path.join(PROJECT_ROOT, "audio_files")
 
 
 def parse_indices(raw: str, max_index: int) -> List[int]:

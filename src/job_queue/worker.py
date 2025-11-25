@@ -1,16 +1,26 @@
 import os
+import sys
 import json
 import traceback
 import redis
-from audio_processing.audio_import import AudioLoader
-from audio_processing.utils import Detection, seconds_to_mmss, fill_default_params
 from typing import Type
 from rq import Queue
-from audio_processing.artifact_simulate import ArtifactSim
-from analysis_types import ANALYSIS_TYPES
 from datetime import datetime
 
-OUTPUT_DIR = os.path.join("..", "..", "detection_results")
+# Add src directory to path so imports work when RQ executes jobs
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+SRC_DIR = os.path.join(PROJECT_ROOT, 'src')
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
+
+from audio_processing.audio_import import AudioLoader
+from audio_processing.utils import Detection, seconds_to_mmss, fill_default_params
+from audio_processing.artifact_simulate import ArtifactSim
+from analysis_types import ANALYSIS_TYPES
+
+# Use absolute path for output directory
+OUTPUT_DIR = os.path.join(PROJECT_ROOT, "detection_results")
 
 class AudioDetectionJob:
     def __init__(self, loader: Type[AudioLoader], audio_file_path: str, redis_url: Type[str] = 'redis://localhost:6379/0'):
