@@ -57,17 +57,29 @@ class AudioDetectionJob:
     def run_detection(self, type: str, params: dict):
         redis_conn = redis.from_url(self.redis_url)
         print(f"Running detection {type} on {self.audio_file}")
-        det_result = ANALYSIS_TYPES[type]['func'](self.audio['data'], self.audio['samplerate'], **params)
+        
         params = fill_default_params(ANALYSIS_TYPES[type]['func'], params)
-        for det in det_result:
-            if isinstance(det, tuple):
-                detection = Detection(start=det[0], end=det[1], type=type, params=params)
-            else:
-                detection = Detection(start=det, end=None, type=type, params=params)
+        
+        det_result = ANALYSIS_TYPES[type]['func'](self.audio['data'], self.audio['samplerate'], **params)
+        
+        if ANALYSIS_TYPES[type]['type'] == 'in-file':
+            for det in det_result:
+                if isinstance(det, tuple):
+                    detection = Detection(start=det[0], end=det[1], type=type, params=params)
+                else:
+                    detection = Detection(start=det, type=type, params=params, in_file=True)
+                redis_conn.rpush(f"results:{self.audio_base}_{self.start_timestamp}", str(detection))
+            
+            print("Found", len(det_result), type, "detections")
+            print(redis_conn.llen(f"results:{self.audio_base}_{self.start_timestamp}"), "total detections for", self.audio_file, "so far")
+        else:
+            detection = Detection(result=det_result, type=type, params=params, in_file=False)
             redis_conn.rpush(f"results:{self.audio_base}_{self.start_timestamp}", str(detection))
+            
+            print("Overall", type, "result:", str(detection))
+            print("Completed", type, "analysis")
+        
         self.complete(type)
-        print("Found", len(det_result), type, "detections")
-        print(redis_conn.llen(f"results:{self.audio_base}_{self.start_timestamp}"), "total detections for", self.audio_file, "so far")
 
     def complete(self, type : str):
         redis_conn = redis.from_url(self.redis_url)
@@ -93,27 +105,43 @@ class AudioDetectionJob:
     def create_report(self):
         redis_conn = redis.from_url(self.redis_url)
         print(f"Creating report for {self.audio_file}...")
-        results = []
+        in_file_results = []
+        overall_results = []
 
         while redis_conn.llen(f"results:{self.audio_base}_{self.start_timestamp}") > 0:
             det_str = redis_conn.lpop(f"results:{self.audio_base}_{self.start_timestamp}").decode('utf-8')
             detection = Detection.det_from_string(det_str)
-            results.append(detection)
+            if detection.in_file:
+                in_file_results.append(detection)
+            else:
+                overall_results.append(detection)
         
         # Convert Detection objects to dicts for JSON serialization
-        results_dicts = [
-            {
-                "type": d.type,
-                "start": d.start,
-                "end": d.end,
-                "params": d.params,
-                "start_mmss": seconds_to_mmss(d.start),
-                "end_mmss": seconds_to_mmss(d.end),
-                "details": d.get_details()
-            }
-            for d in sorted(results)
-        ]
-        
+        results_dicts = {
+            "title": "AuQA Report for " + self.audio_file,
+            "file": self.audio_file,
+            "overall_results": [
+                {
+                    "type": d.type,
+                    "params": d.params,
+                    "result": d.result
+                }
+                for d in sorted(overall_results)
+            ],
+            "in_file_detections": [
+                {
+                    "type": d.type,
+                    "start": d.start,
+                    "end": d.end,
+                    "params": d.params,
+                    "start_mmss": seconds_to_mmss(d.start),
+                    "end_mmss": seconds_to_mmss(d.end),
+                    "details": d.get_details()
+                }
+                for d in sorted(in_file_results)
+            ]
+        }
+
         # Prepare output directory: detection_results/{audio_file_no_ext}_{timestamp}/
         ts_str = datetime.fromtimestamp(self.start_timestamp).strftime('%Y-%m-%d_%H-%M-%S')
         out_dir = os.path.join(OUTPUT_DIR, f"{self.audio_base}_{ts_str}")
