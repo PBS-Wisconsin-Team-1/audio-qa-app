@@ -36,8 +36,16 @@ def get_processed_files():
                         with open(report_path, 'r') as f:
                             report_data = json.load(f)
                         
-                        # Extract file name from report filename (remove _report.json)
-                        base_name = file.replace('_report.json', '')
+                        # Handle new format (object with title, file, overall_results, in_file_detections)
+                        # or old format (array of detections)
+                        if isinstance(report_data, dict):
+                            # New format
+                            base_name = report_data.get('file', file.replace('_report.json', ''))
+                            issue_count = len(report_data.get('in_file_detections', []))
+                        else:
+                            # Old format (backward compatibility)
+                            base_name = file.replace('_report.json', '')
+                            issue_count = len(report_data) if isinstance(report_data, list) else 0
                         
                         # Extract timestamp from directory name
                         # Format: {base_name}_{timestamp} or just timestamp
@@ -79,7 +87,7 @@ def get_processed_files():
                         files.append({
                             'id': item,  # Use directory name as ID
                             'name': base_name,
-                            'issueCount': len(report_data) if isinstance(report_data, list) else 0,
+                            'issueCount': issue_count,
                             'processedDate': formatted_date,
                             'reportPath': report_path
                         })

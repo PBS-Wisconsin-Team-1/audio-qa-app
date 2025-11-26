@@ -111,7 +111,7 @@ function App() {
               />
               <FileDetailView
                 file={selectedFile}
-                detections={detections}
+                report={detections}
               />
             </>
           )}

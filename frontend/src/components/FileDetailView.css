@@ -115,11 +115,84 @@
   color: #333;
 }
 
+.file-detail-section {
+  margin-bottom: 32px;
+}
+
+.file-detail-section-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16px;
+}
+
 .file-detail-issues-title {
   font-size: 20px;
   font-weight: 600;
   color: #333;
   margin-bottom: 16px;
+}
+
+.file-detail-overall-results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.file-detail-overall-result {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 16px;
+  background-color: #f8f9fa;
+}
+
+.file-detail-overall-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.file-detail-overall-result-type {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-detail-overall-result-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+.file-detail-overall-result-params {
+  font-size: 13px;
+  color: #666;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.file-detail-overall-result-params strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.file-detail-overall-result-params ul {
+  margin: 4px 0 0 0;
+  padding-left: 20px;
+}
+
+.file-detail-overall-result-params li {
+  margin-bottom: 2px;
 }
 
 .file-detail-issues-list {
