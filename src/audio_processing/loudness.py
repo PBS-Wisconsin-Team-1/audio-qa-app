@@ -37,7 +37,7 @@ def compute_short_term_loudness(
 
     return np.array(times, float), np.array(lufs, float)
 
-# Detect loudness spikes above threshold
+# Return (start, end, max_lufs) tuples for loudness spikes above threshold [ran by job queue]
 def get_loudness_spikes(
     audio: np.ndarray,
     sr: int,
@@ -120,6 +120,7 @@ def get_loudness_spikes(
     
     return merged
 
+# Get overall LUFS for entire audio file [ran by job queue]
 def get_lufs(
     audio: np.ndarray,
     sr: int

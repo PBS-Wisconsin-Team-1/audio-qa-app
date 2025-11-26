@@ -18,6 +18,7 @@ def index_to_time(index: int, sr: int) -> float:
         raise ValueError("Index must be non-negative")
     return index / float(sr)
 
+# return list of (start_s, end_s) tuples for clipping regions where both are in seconds [ran by job queue]
 def detect_clipping(audio, sr) -> list[tuple[float, float]]:
     """
     Detects clipping in an audio file.
@@ -38,7 +39,7 @@ def detect_clipping(audio, sr) -> list[tuple[float, float]]:
 
     return ditorted_regions
 
-# returnn list of (start_s, end_s) tuples for cutout regions where both are in seconds
+# return list of (start_s, end_s) tuples for cutout regions where both are in seconds [ran by job queue]
 def detect_cutout(audio, sr, threshold=0.001, min_len=50) -> list[tuple[float, float]]:
     frame_length = int((min_len * sr) / 1000)
     hop_length = frame_length // 2
