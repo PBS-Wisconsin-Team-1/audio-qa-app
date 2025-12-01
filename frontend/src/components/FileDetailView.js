@@ -157,11 +157,7 @@ const FileDetailView = ({ file, report }) => {
                       </span>
                     </div>
                     <p className="file-detail-issue-details">
-                      {detection.details && !detection.details.includes('clipdetect library') 
-                        ? detection.details 
-                        : detection.type === 'Clipping' 
-                          ? 'Clipping detected' 
-                          : detection.details || `${detection.type} detected`}
+                      {detection.details}
                     </p>
                     {detection.params && Object.keys(detection.params).length > 0 && (
                       <div className="file-detail-issue-params">

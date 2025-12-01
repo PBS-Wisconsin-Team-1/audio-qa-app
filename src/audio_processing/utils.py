@@ -24,7 +24,7 @@ class Detection:
                 return f'Less than {self.params["threshold"]} RMS detected for at least {self.params["min_len"]} ms'
 
             case "Clipping":
-                return f"Detected using clipdetect library's ClipDaT algorithm implementation"
+                return f"Clipping detected by ClipDaT algorithm"
             
             case "Loudness":
                 return f'Loudness exceeded {self.params["threshold"]} LUFS'
