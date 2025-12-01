@@ -3,5 +3,5 @@
 
 cd "$(dirname "$0")/.."
 cd src/job_queue
-PYTHONPATH=../../src rq worker
+PYTHONPATH=../../src rq worker --worker-class rq.SimpleWorker
 
