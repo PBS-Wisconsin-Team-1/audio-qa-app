@@ -190,6 +190,23 @@ def upload_file():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/', methods=['GET'])
+def root():
+    """Root endpoint - API information."""
+    return jsonify({
+        'message': 'Audio QA API Server',
+        'status': 'ok',
+        'frontend': 'http://localhost:3000',
+        'endpoints': {
+            '/api': 'GET - List all API endpoints',
+            '/api/files': 'GET - List all processed files',
+            '/api/files/<file_id>/report': 'GET - Get detection report for a file',
+            '/api/queue/status': 'GET - Get queue status',
+            '/api/upload': 'POST - Upload audio file',
+            '/api/health': 'GET - Health check'
+        }
+    })
+
 @app.route('/api', methods=['GET'])
 def api_info():
     """API information endpoint."""
