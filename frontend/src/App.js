@@ -3,6 +3,7 @@ import Gallery from './components/Gallery';
 import QueueProgressBar from './components/QueueProgressBar';
 import FileUpload from './components/FileUpload';
 import FileDetailView from './components/FileDetailView';
+import AudioDirSelector from './components/AudioDirSelector';
 import { getProcessedFiles, getDetectionReport } from './services/api';
 import './App.css';
 
@@ -90,6 +91,7 @@ function App() {
 
       <main className="app-main">
         <div className="app-sidebar">
+          <AudioDirSelector onDirChange={loadFiles} />
           <QueueProgressBar />
           {showUpload && (
             <FileUpload onUploadSuccess={handleUploadSuccess} />

@@ -1,8 +1,5 @@
 import os
-import redis
-from rq import Queue
-from audio_processing.audio_import import AudioLoader
-import os
+import json
 import redis
 from rq import Queue
 from audio_processing.audio_import import AudioLoader
@@ -15,7 +12,26 @@ from typing import List
 # Get the project root directory (two levels up from this file)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-AUDIO_DIR = os.path.join(PROJECT_ROOT, "audio_files")
+DEFAULT_AUDIO_DIR = os.path.join(PROJECT_ROOT, "audio_files")
+
+# Config file to store audio directory preference (shared with API server)
+CONFIG_FILE = os.path.join(PROJECT_ROOT, '.audio_qa_config.json')
+
+def get_audio_files_dir():
+    """Get the configured audio files directory, or default if not set."""
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                config = json.load(f)
+                audio_dir = config.get('audio_files_dir')
+                if audio_dir and os.path.exists(audio_dir):
+                    return audio_dir
+        except Exception as e:
+            print(f"Warning: Error reading config file: {e}")
+    return DEFAULT_AUDIO_DIR
+
+# Use the configured directory (or default)
+AUDIO_DIR = get_audio_files_dir()
 
 
 def parse_indices(raw: str, max_index: int) -> List[int]:
@@ -45,7 +61,10 @@ def safe_input(prompt: str, default: str = "") -> str:
 
 def main():
     multiprocessing.set_start_method("spawn", force=True)
-    loader = AudioLoader(directory=AUDIO_DIR)
+    # Get the current configured directory (in case it changed)
+    audio_dir = get_audio_files_dir()
+    print(f"Using audio directory: {audio_dir}")
+    loader = AudioLoader(directory=audio_dir)
 
     # Establish Redis connection and validate
     try:
@@ -125,12 +144,12 @@ def main():
             if not audio_file_path:
                 print("No file provided; aborting.")
                 continue
-            abs_path = os.path.join(AUDIO_DIR, audio_file_path)
+            abs_path = os.path.join(audio_dir, audio_file_path)
             if not os.path.exists(abs_path):
                 print(f"File not found: {abs_path}; aborting.")
                 continue
             try:
-                job = job_queue.enqueue(simulate_artifacts, AudioLoader(directory=AUDIO_DIR), audio_file_path, {})
+                job = job_queue.enqueue(simulate_artifacts, AudioLoader(directory=audio_dir), audio_file_path, {})
                 print(f"Queued simulate_artifact job for {audio_file_path}")
             except Exception as exc:
                 print(f"Failed to enqueue simulate_artifacts: {exc}")

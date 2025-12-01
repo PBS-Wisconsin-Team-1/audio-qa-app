@@ -56,6 +56,13 @@
   margin: 0;
 }
 
+.file-upload-hint {
+  color: #999;
+  font-size: 12px;
+  margin: 8px 0 0 0;
+  font-style: italic;
+}
+
 .file-upload-input {
   position: absolute;
   top: 0;
@@ -87,6 +94,16 @@
   border: 1px solid #fcc;
   border-radius: 4px;
   color: #c33;
+  font-size: 14px;
+}
+
+.file-upload-success {
+  margin-top: 12px;
+  padding: 12px;
+  background-color: #efe;
+  border: 1px solid #cfc;
+  border-radius: 4px;
+  color: #3c3;
   font-size: 14px;
 }
 
