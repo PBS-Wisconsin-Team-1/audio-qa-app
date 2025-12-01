@@ -41,7 +41,7 @@
       "params": {},
       "start_mmss": "00:01.05",
       "end_mmss": "00:01.05",
-      "details": "Detected using clipdetect library's ClipDaT algorithm implementation"
+      "details": "Clipping detected by ClipDaT algorithm"
     }
   ]
 }
