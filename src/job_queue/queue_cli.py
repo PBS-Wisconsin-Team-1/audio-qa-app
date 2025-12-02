@@ -3,8 +3,8 @@ import json
 import redis
 from rq import Queue
 from audio_processing.audio_import import AudioLoader
-from worker import AudioDetectionJob, simulate_artifacts
-from analysis_types import USER_JOB_TYPES, ANALYSIS_TYPES
+from .worker import AudioDetectionJob, simulate_artifacts
+from .analysis_types import USER_JOB_TYPES, ANALYSIS_TYPES
 import multiprocessing
 from typing import List
 

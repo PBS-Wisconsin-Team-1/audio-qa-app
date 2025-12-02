@@ -227,8 +227,8 @@ def upload_file():
         
         # Import here to avoid circular imports
         from audio_processing.audio_import import AudioLoader
-        from worker import AudioDetectionJob
-        from analysis_types import ANALYSIS_TYPES
+        from .worker import AudioDetectionJob
+        from .analysis_types import ANALYSIS_TYPES
         from rq import Queue
         
         # Queue the file for processing
@@ -392,7 +392,8 @@ def health():
     """Health check endpoint."""
     return jsonify({'status': 'ok'})
 
-if __name__ == '__main__':
+def main():
+    """Main entry point for the API server."""
     # Ensure directories exist
     os.makedirs(DETECTION_RESULTS_DIR, exist_ok=True)
     audio_dir = get_audio_files_dir()
@@ -409,3 +410,5 @@ if __name__ == '__main__':
     
     app.run(host='0.0.0.0', port=port, debug=True)
 
+if __name__ == '__main__':
+    main()

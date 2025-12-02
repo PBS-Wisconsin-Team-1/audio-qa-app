@@ -25,7 +25,7 @@ if ($dashboard) {
 }
 
 # Start API server in new PowerShell window using venv Python
-${p_api} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-API'; cd '$jobQueueDir'; python api_server.py" -WindowStyle Normal -PassThru
+${p_api} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-API'; cd '$jobQueueDir'; auqa-api" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p_api.Id
 
 # Start RQ Workers in new PowerShell windows sourcing venv
@@ -38,5 +38,5 @@ for ($i = 1; $i -le $workers; $i++) {
 
 # Start Client CLI in new PowerShell window using venv Python
 Start-Sleep -Seconds 1
-${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-CLIENT'; cd '$jobQueueDir'; python queue_cli.py" -WindowStyle Normal -PassThru
+${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-CLIENT'; cd '$jobQueueDir'; auqa-cli" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p3.Id

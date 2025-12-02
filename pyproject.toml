@@ -1,5 +1,6 @@
 [tool.hatch.build.targets.wheel]
-packages = ["src/audio_processing"]
+packages = ["src/audio_processing", "src/job_queue"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -47,6 +48,10 @@ dev = [
 Homepage = "https://github.com/PBS-Wisconsin-Team-1/audio-qa-app"
 Repository = "https://github.com/PBS-Wisconsin-Team-1/audio-qa-app"
 Issues = "https://github.com/PBS-Wisconsin-Team-1/audio-qa-app/issues"
+
+[project.scripts]
+auqa-cli = "job_queue.queue_cli:main"
+auqa-api = "job_queue.api_server:main"
 
 [dependency-groups]
 dev = [

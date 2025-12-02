@@ -17,7 +17,7 @@ if SRC_DIR not in sys.path:
 from audio_processing.audio_import import AudioLoader
 from audio_processing.utils import Detection, seconds_to_mmss, fill_default_params
 from audio_processing.artifact_simulate import ArtifactSim
-from analysis_types import ANALYSIS_TYPES
+from .analysis_types import ANALYSIS_TYPES
 
 # Use absolute path for output directory
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "detection_results")

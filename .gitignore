@@ -3,6 +3,9 @@
 venv/
 audioenv/
 
+# Configuration files
+.audio_qa_config.json
+
 # Python
 __pycache__/
 *.py[cod]

@@ -81,18 +81,18 @@ done
 # Start API server in a new terminal window
 echo "Starting API server..."
 if [[ "$MACHINE" == "Mac" ]]; then
-    osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$API_DIR' && python api_server.py\"" > /dev/null 2>&1 &
+    osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$SCRIPT_DIR/..' && auqa-api\"" > /dev/null 2>&1 &
 elif [[ "$MACHINE" == "Linux" ]]; then
-    gnome-terminal --title="AUQA-API" -- bash -c "cd $API_DIR && python api_server.py; exec bash" 2>/dev/null &
+    gnome-terminal --title="AUQA-API" -- bash -c "cd $SCRIPT_DIR/.. && auqa-api; exec bash" 2>/dev/null &
 fi
 sleep 2
 
 # Start the queue CLI in a new terminal window
 echo "Starting Queue CLI..."
 if [[ "$MACHINE" == "Mac" ]]; then
-    osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$JOB_QUEUE_DIR' && PYTHONPATH=../../src python queue_cli.py\"" > /dev/null 2>&1 &
+    osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$SCRIPT_DIR/..' && auqa-cli\"" > /dev/null 2>&1 &
 elif [[ "$MACHINE" == "Linux" ]]; then
-    gnome-terminal --title="AUQA-QUEUER" -- bash -c "cd $JOB_QUEUE_DIR && PYTHONPATH=../../src python queue_cli.py; exec bash" 2>/dev/null &
+    gnome-terminal --title="AUQA-QUEUER" -- bash -c "cd $SCRIPT_DIR/.. && auqa-cli; exec bash" 2>/dev/null &
 fi
 sleep 2
 echo ""
