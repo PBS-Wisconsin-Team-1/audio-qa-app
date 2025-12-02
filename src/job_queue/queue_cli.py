@@ -85,6 +85,11 @@ def main():
         print("3. Exit")
         choice = safe_input("Select an option: ")
 
+        if get_audio_files_dir() != loader.directory:
+            audio_dir = get_audio_files_dir()
+            print(f"Audio directory changed. Using new directory: {audio_dir}")
+            loader = AudioLoader(directory=audio_dir)
+
         if choice == "1":
             det_types = list(ANALYSIS_TYPES.keys())
             print("Available detection types:")
@@ -116,7 +121,7 @@ def main():
             if not files:
                 print("No audio files found in audio directory.")
                 continue
-            print("Available audio files:")
+            print(f"Available audio files ({loader.directory}):")
             for i, f in enumerate(files, 1):
                 print(f"  {i}. {f}")
             raw_files = safe_input("Enter audio file numbers to process (comma-separated, e.g. '1,2' or 'all'): ")

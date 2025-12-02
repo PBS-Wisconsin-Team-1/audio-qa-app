@@ -1,6 +1,6 @@
 {
-  "title": "AuQA Report for ex1_distorted.wav",
-  "file": "ex1_distorted.wav",
+  "title": "Example AuQA Report",
+  "file": "Example",
   "overall_results": [
     {
       "type": "Overall LUFS",

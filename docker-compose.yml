@@ -1,0 +1,138 @@
+services:
+  # Redis service for job queue
+  redis:
+    image: redis:7-alpine
+    container_name: auqa-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - auqa-network
+
+  # RQ Worker for processing audio jobs
+  worker:
+    image: ayuan1114/auqa-backend:latest
+    build: .
+    container_name: auqa-worker
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./audio_files:/app/audio_files
+      - ./detection_results:/app/detection_results
+    command: rq worker --worker-class rq.SimpleWorker --url redis://redis:6379
+    networks:
+      - auqa-network
+    restart: unless-stopped
+
+  # Flask API server
+  api:
+    image: ayuan1114/auqa-backend:latest
+    build: .
+    container_name: auqa-api
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "5001:5001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./audio_files:/app/audio_files
+      - ./detection_results:/app/detection_results
+    command: auqa-api
+    networks:
+      - auqa-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5001/api/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # RQ Dashboard (optional - for monitoring)
+  dashboard:
+    image: ayuan1114/auqa-backend:latest
+    build: .
+    container_name: auqa-dashboard
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "9181:9181"
+    environment:
+      - RQ_DASHBOARD_REDIS_URL=redis://redis:6379
+      - PYTHONUNBUFFERED=1
+    command: rq-dashboard --redis-url redis://redis:6379 --bind 0.0.0.0:9181
+    networks:
+      - auqa-network
+    restart: unless-stopped
+    profiles:
+      - with-dashboard
+
+  # Frontend development server
+  frontend:
+    image: node:18-alpine
+    container_name: auqa-frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: sh -c "npm install && npm start"
+    environment:
+      - REACT_APP_API_URL=http://localhost:5001/api
+    networks:
+      - auqa-network
+    restart: unless-stopped
+    healthcheck:
+      test: "curl -f http://localhost:3000 || exit 1"
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+# Queue CLI client
+  cli:
+    image: ayuan1114/auqa-backend:latest
+    build: .
+    container_name: auqa-cli
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ${AUDIO_FILES_PATH:-./audio_files}:/app/audio_files
+      - ./detection_results:/app/detection_results
+    command: auqa-cli
+    stdin_open: true
+    tty: true
+    networks:
+      - auqa-network
+    restart: unless-stopped
+
+networks:
+  auqa-network:
+    driver: bridge
+
+volumes:
+  redis-data:
