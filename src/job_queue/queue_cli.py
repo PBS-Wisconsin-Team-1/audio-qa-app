@@ -59,11 +59,18 @@ def safe_input(prompt: str, default: str = "") -> str:
         return default
 
 
+def clear_screen():
+    """Clear the terminal screen (cross-platform)."""
+    try:
+        os.system('cls' if os.name == 'nt' else 'clear')
+    except Exception:
+        pass
+
+
 def main():
     multiprocessing.set_start_method("spawn", force=True)
     # Get the current configured directory (in case it changed)
     audio_dir = get_audio_files_dir()
-    print(f"Using audio directory: {audio_dir}")
     loader = AudioLoader(directory=audio_dir)
 
     # Establish Redis connection and validate
@@ -77,8 +84,10 @@ def main():
 
     job_queue = Queue(connection=redis_conn)
 
-    print("Audio QA Job Queue CLI")
     while True:
+        clear_screen()
+        print(f"Using audio directory: {audio_dir}")
+        print("Audio QA Job Queue CLI")
         print("\nMenu:")
         print("1. Queue audio detection jobs")
         print("2. Queue simulate_artifact job")
@@ -91,6 +100,7 @@ def main():
             loader = AudioLoader(directory=audio_dir)
 
         if choice == "1":
+            clear_screen()
             det_types = list(ANALYSIS_TYPES.keys())
             print("Available detection types:")
             for i, det_type in enumerate(det_types, 1):
@@ -100,6 +110,7 @@ def main():
             det_indices = parse_indices(raw, len(det_types))
             if not det_indices:
                 print("No valid detection types selected. Skipping.")
+                safe_input("Press Enter to continue...")
                 continue
 
             detection_params = {}
@@ -120,7 +131,9 @@ def main():
             files = loader.get_file_list()
             if not files:
                 print("No audio files found in audio directory.")
+                safe_input("Press Enter to continue...")
                 continue
+            clear_screen()
             print(f"Available audio files ({loader.directory}):")
             for i, f in enumerate(files, 1):
                 print(f"  {i}. {f}")
@@ -128,6 +141,7 @@ def main():
             file_indices = parse_indices(raw_files, len(files))
             if not file_indices:
                 print("No valid files selected. Skipping.")
+                safe_input("Press Enter to continue...")
                 continue
 
             selected_files = [files[i] for i in file_indices]
@@ -136,6 +150,7 @@ def main():
                 abs_path = os.path.join(loader.directory, audio_file_path)
                 if not os.path.exists(abs_path):
                     print(f"File not found: {abs_path}; skipping.")
+                    safe_input("Press Enter to continue...")
                     continue
                 job = AudioDetectionJob(loader, audio_file_path)
                 try:
@@ -143,27 +158,34 @@ def main():
                     print(f"Queued detection job for {audio_file_path}")
                 except Exception as exc:
                     print(f"Failed to enqueue job for {audio_file_path}: {exc}")
+                    safe_input("Press Enter to continue...")
 
         elif choice == "2":
+            clear_screen()
             audio_file_path = safe_input("Enter audio file path for simulation: ")
             if not audio_file_path:
                 print("No file provided; aborting.")
+                safe_input("Press Enter to continue...")
                 continue
             abs_path = os.path.join(audio_dir, audio_file_path)
             if not os.path.exists(abs_path):
                 print(f"File not found: {abs_path}; aborting.")
+                safe_input("Press Enter to continue...")
                 continue
             try:
                 job = job_queue.enqueue(simulate_artifacts, AudioLoader(directory=audio_dir), audio_file_path, {})
                 print(f"Queued simulate_artifact job for {audio_file_path}")
             except Exception as exc:
                 print(f"Failed to enqueue simulate_artifacts: {exc}")
+                safe_input("Press Enter to continue...")
 
         elif choice == "3":
             print("Exiting.")
             break
         else:
             print("Invalid option. Please try again.")
+        # Pause before refreshing menu
+        safe_input("Press Enter to continue...")
 
 
 if __name__ == "__main__":
