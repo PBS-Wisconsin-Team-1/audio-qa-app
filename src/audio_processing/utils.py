@@ -10,13 +10,14 @@ def seconds_to_mmss(seconds : float):
     return f"{minutes:02d}:{secs:05.2f}"
 
 class Detection:
-    def __init__(self, type: str, params: dict, result=None, start: float=None, end: float=None, in_file: bool=True):
+    def __init__(self, type: str, params: dict, id: int = 0, result=None, start: float=None, end: float=None, in_file: bool=True):
         self.start = start
         self.end = end
         self.type = type
         self.params = params
         self.result = result
         self.in_file = in_file
+        self.id = id
 
     def get_details(self) -> str:
         match self.type:
@@ -42,6 +43,7 @@ class Detection:
     def to_json(self) -> str:
         return json.dumps({
             'type': self.type,
+            'id': self.id,
             'params': self.params,
             'start': self.start,
             'end': self.end,
@@ -53,12 +55,13 @@ class Detection:
     def det_from_string(s: str) -> "Detection":
         d = json.loads(s)
         type = str(d['type'])
+        id = int(d['id']) if 'id' in d else None
         params = d['params'] if d['params'] is not None else {}
         start = float(d['start']) if d['start'] is not None else None
         end = float(d['end']) if d['end'] is not None else None
         result = d['result'] if 'result' in d else None
         in_file = bool(d['in_file']) if 'in_file' in d else None
-        return Detection(start=start, end=end, result=result, type=type, params=params, in_file=in_file)
+        return Detection(id=id, start=start, end=end, result=result, type=type, params=params, in_file=in_file)
 
 def fill_default_params(func, params):
     sig = inspect.signature(func)

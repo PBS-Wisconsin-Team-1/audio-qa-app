@@ -42,8 +42,7 @@ def get_loudness_spikes(
     audio: np.ndarray,
     sr: int,
     window_s: float = 0.4,
-    threshold: float = -23.0,
-    merge: bool = True
+    threshold: float = -23.0
 ) -> List[Tuple[float, float, float]]:
     """
     Find sections of audio where loudness exceeds the specified threshold.
@@ -59,6 +58,8 @@ def get_loudness_spikes(
         List[Tuple[float, float, float]]: List of (start_time, end_time, max_lufs) tuples
                                           for each detected spike section.
     """
+    merge = True
+
     hop_s = window_s / 2.0  # 50% overlap
     meter = pyln.Meter(sr)
     win_len = int(window_s * sr)

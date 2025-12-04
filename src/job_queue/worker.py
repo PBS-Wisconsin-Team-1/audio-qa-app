@@ -6,6 +6,7 @@ import redis
 from typing import Type
 from rq import Queue
 from datetime import datetime
+import soundfile as sf
 
 # Add src directory to path so imports work when RQ executes jobs
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,7 +24,7 @@ from .analysis_types import ANALYSIS_TYPES
 OUTPUT_DIR = os.path.join(PROJECT_ROOT, "detection_results")
 
 class AudioDetectionJob:
-    def __init__(self, loader: Type[AudioLoader], audio_file_path: str, redis_url: Type[str] = 'redis://localhost:6379/0'):
+    def __init__(self, loader: Type[AudioLoader], audio_file_path: str, redis_url: Type[str] = 'redis://localhost:6379/0', clip_pad: float = 0.1):
         self.redis_url = redis_url
         self.loader = loader
         self.completed = {}
@@ -32,6 +33,26 @@ class AudioDetectionJob:
         self.job_ids = []
         self.audio_base = os.path.splitext(os.path.basename(self.audio_file))[0]
         self.start_timestamp = int(datetime.now().timestamp())
+        self.clip_pad = clip_pad
+
+        ts_str = datetime.fromtimestamp(self.start_timestamp).strftime('%Y-%m-%d_%H-%M-%S')
+        self.out_dir = os.path.join(OUTPUT_DIR, f"{self.audio_base}_{ts_str}")
+        os.makedirs(self.out_dir, exist_ok=True)
+
+    def save_clip(self, det_type: str, id: int, start_s: float, end_s: float = None):
+        if end_s is None:
+            end_s = start_s  # Save a very short clip for point detections
+
+        start = max(0, start_s - self.clip_pad)
+        end = end_s + self.clip_pad
+
+        start = int(start * self.audio['samplerate'])
+        end = int(end * self.audio['samplerate'])
+
+        os.makedirs(os.path.join(self.out_dir, "clips"), exist_ok=True)
+        clip_path = os.path.join(self.out_dir, "clips", f"{det_type.lower()}-{id}.wav")
+
+        sf.write(clip_path, self.audio['data'][start:end], self.audio['samplerate'])
 
     def load_and_queue(self, analyses: dict):
         try:
@@ -54,32 +75,36 @@ class AudioDetectionJob:
             traceback.print_exc()
             raise  # Optionally re-raise to let RQ mark the job as failed
         
-    def run_detection(self, type: str, params: dict):
+    def run_detection(self, det_type: str, params: dict):
         redis_conn = redis.from_url(self.redis_url)
-        print(f"Running detection {type} on {self.audio_file}")
+        print(f"Running detection {det_type} on {self.audio_file}")
         
-        params = fill_default_params(ANALYSIS_TYPES[type]['func'], params)
+        params = fill_default_params(ANALYSIS_TYPES[det_type]['func'], params)
         
-        det_result = ANALYSIS_TYPES[type]['func'](self.audio['data'], self.audio['samplerate'], **params)
+        det_result = ANALYSIS_TYPES[det_type]['func'](self.audio['data'], self.audio['samplerate'], **params)
         
-        if ANALYSIS_TYPES[type]['type'] == 'in-file':
-            for det in det_result:
+        if ANALYSIS_TYPES[det_type]['type'] == 'in-file':
+            for id, det in enumerate(det_result):
                 if isinstance(det, tuple):
-                    detection = Detection(start=det[0], end=det[1], type=type, params=params)
+                    det = round(det[0], 3), round(det[1], 3)
+                    self.save_clip(det_type, id=id, start_s=det[0], end_s=det[1])
+                    detection = Detection(id=id, start=det[0], end=det[1], type=det_type, params=params)
                 else:
-                    detection = Detection(start=det, type=type, params=params, in_file=True)
+                    det = round(det, 3)
+                    self.save_clip(det_type, id=id, start_s=det)
+                    detection = Detection(id=id, start=det, type=det_type, params=params, in_file=True)
                 redis_conn.rpush(f"results:{self.audio_base}_{self.start_timestamp}", str(detection))
             
-            print("Found", len(det_result), type, "detections")
+            print("Found", len(det_result), det_type, "detections")
             print(redis_conn.llen(f"results:{self.audio_base}_{self.start_timestamp}"), "total detections for", self.audio_file, "so far")
         else:
-            detection = Detection(result=det_result, type=type, params=params, in_file=False)
+            detection = Detection(result=det_result, type=det_type, params=params, in_file=False)
             redis_conn.rpush(f"results:{self.audio_base}_{self.start_timestamp}", str(detection))
             
-            print("Overall", type, "result:", str(detection))
-            print("Completed", type, "analysis")
+            print("Overall", det_type, "result:", str(detection))
+            print("Completed", det_type, "analysis")
         
-        self.complete(type)
+        self.complete(det_type)
 
     def complete(self, type : str):
         redis_conn = redis.from_url(self.redis_url)
@@ -131,6 +156,7 @@ class AudioDetectionJob:
             "in_file_detections": [
                 {
                     "type": d.type,
+                    "id": d.id,
                     "start": d.start,
                     "end": d.end,
                     "params": d.params,
@@ -143,13 +169,10 @@ class AudioDetectionJob:
         }
 
         # Prepare output directory: detection_results/{audio_file_no_ext}_{timestamp}/
-        ts_str = datetime.fromtimestamp(self.start_timestamp).strftime('%Y-%m-%d_%H-%M-%S')
-        out_dir = os.path.join(OUTPUT_DIR, f"{self.audio_base}_{ts_str}")
-        os.makedirs(out_dir, exist_ok=True)
-        json_path = os.path.join(out_dir, f"{self.audio_base}_report.json")
+        json_path = os.path.join(self.out_dir, f"{self.audio_base}_report.json")
         with open(json_path, 'w') as f:
             json.dump(results_dicts, f, indent=2)
-        print("Report saved to:", out_dir)
+        print("Report saved to:", self.out_dir)
 
 
 def simulate_artifacts(loader : Type[AudioLoader], input_file: str, output_file: str, artifacts: dict, seed: int = 42):

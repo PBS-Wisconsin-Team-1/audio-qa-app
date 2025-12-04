@@ -113,17 +113,27 @@ def main():
                 safe_input("Press Enter to continue...")
                 continue
 
+            clip_padding = safe_input("Enter clip padding in seconds [press Enter to use default (0.1s)]: ")
+            if clip_padding == "":
+                clip_padding = 0.1
+            else:
+                try:
+                    clip_padding = float(clip_padding)
+                except ValueError:
+                    print("Invalid clip padding value; using default 0.1s.")
+                    clip_padding = 0.1
+
             detection_params = {}
             for idx in det_indices:
                 det_type = det_types[idx]
                 param_dict = {}
                 param_specs = ANALYSIS_TYPES[det_type].get('params', {})
-                for param, param_type in param_specs.items():
-                    val = safe_input(f"Enter value for {det_type} parameter '{param}' ({param_type.__name__}) [press Enter to skip]: ")
+                for param, param_default in param_specs.items():
+                    val = safe_input(f"Enter value for {det_type} parameter '{param}' ({type(param_default).__name__}) [press Enter to use default ({param_default})]: ")
                     if val == "":
                         continue
                     try:
-                        param_dict[param] = param_type(val)
+                        param_dict[param] = type(param_default)(val)
                     except Exception:
                         print(f"Invalid value for {param}; ignoring and using defaults later.")
                 detection_params[det_type] = param_dict
@@ -152,7 +162,7 @@ def main():
                     print(f"File not found: {abs_path}; skipping.")
                     safe_input("Press Enter to continue...")
                     continue
-                job = AudioDetectionJob(loader, audio_file_path)
+                job = AudioDetectionJob(loader, audio_file_path, clip_pad=clip_padding)
                 try:
                     job_queue.enqueue(job.load_and_queue, detection_params)
                     print(f"Queued detection job for {audio_file_path}")

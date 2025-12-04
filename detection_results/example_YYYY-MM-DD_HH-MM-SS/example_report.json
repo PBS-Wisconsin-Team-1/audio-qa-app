@@ -11,8 +11,9 @@
   "in_file_detections": [
     {
       "type": "Cutout",
+      "id": 0,
       "start": 0.0,
-      "end": 0.42480725623582766,
+      "end": 0.425,
       "params": {
         "threshold": 0.001,
         "min_len": 50
@@ -23,12 +24,12 @@
     },
     {
       "type": "Loudness",
+      "id": 0,
       "start": 0.8,
       "end": 1.4,
       "params": {
         "window_s": 0.4,
-        "threshold": -23.0,
-        "merge": true
+        "threshold": -23.0
       },
       "start_mmss": "00:00.80",
       "end_mmss": "00:01.40",
@@ -36,8 +37,9 @@
     },
     {
       "type": "Clipping",
-      "start": 1.0526077097505668,
-      "end": 1.0526530612244898,
+      "id": 0,
+      "start": 1.053,
+      "end": 1.053,
       "params": {},
       "start_mmss": "00:01.05",
       "end_mmss": "00:01.05",
