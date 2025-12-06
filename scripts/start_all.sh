@@ -91,7 +91,7 @@ sleep 2
 # Start the queue CLI in a new terminal window
 echo "Starting Queue CLI..."
 if [[ "$MACHINE" == "Mac" ]]; then
-    osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$SCRIPT_DIR/..' && auqa-cli\"" > /dev/null 2>&1 &
+    osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$FRONTEND_DIR/..' && npm start\"" > /dev/null 2>&1 &
 elif [[ "$MACHINE" == "Linux" ]]; then
     gnome-terminal --title="AUQA-QUEUER" -- bash -c "cd $FRONTEND_DIR && npm start; exec bash" 2>/dev/null &
 fi
