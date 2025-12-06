@@ -32,5 +32,28 @@ ANALYSIS_TYPES = {
         "type": "overall",
         "params": {},
         "func": get_lufs
+    },
+    "Low MOS": {
+    "type": "in-file",
+    "display_name": "Low Audio Quality",
+    "description": "Identifies portions of the audio that fall below an acceptable quality level.",
+    "params": {
+        "mos_threshold": {
+            "default": 2.5,
+            "label": "Quality Level",
+            "help": "The minimum acceptable quality score before a section is flagged."
+        },
+        "window_s": {
+            "default": 1.0,
+            "label": "Evaluation Duration",
+            "help": "How long the system listens during each quality assessment."
+        },
+        "hop_s": {
+            "default": 0.5,
+            "label": "Evaluation Interval",
+            "help": "How frequently the system performs a new assessment as it moves through the audio."
+        },
+    },
+    "func": detect_low_mos_regions,
     }
 }
