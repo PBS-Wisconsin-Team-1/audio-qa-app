@@ -1,6 +1,6 @@
 # Audio QA App (AuQA)
 
-![AuQA Screenshot](assets/AuQA_screenshot.png)
+![AuQA Screenshot](assets/AuQA-screenshot.png)
 
 AuQA is an audio quality assurance tool that analyzes audio files for common artifacts such as clipping, cutouts (dropouts), and perceptual quality issues. The web frontend lets you upload audio, browse processed files, inspect per-file detection reports and clips, and launch the CLI client from the UI.
 
