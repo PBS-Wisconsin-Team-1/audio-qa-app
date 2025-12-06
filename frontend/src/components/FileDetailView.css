@@ -201,6 +201,153 @@
   gap: 16px;
 }
 
+/* Collapsible Detection Groups */
+.file-detail-detection-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.file-detail-detection-group {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+.file-detail-detection-group:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-detail-detection-group-header {
+  padding: 14px 16px;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.file-detail-detection-group-header:hover {
+  background-color: #e9ecef;
+}
+
+.file-detail-detection-group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.file-detail-detection-group-icon {
+  font-size: 12px;
+  color: #666;
+  width: 16px;
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.file-detail-detection-group-type {
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.file-detail-detection-group-count {
+  font-size: 13px;
+  color: #666;
+  font-weight: 500;
+}
+
+.file-detail-detection-group-content {
+  padding: 16px;
+  background-color: white;
+  border-top: 1px solid #e0e0e0;
+}
+
+.file-detail-detection-group-details {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.file-detail-detection-group-details strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.file-detail-detection-group-details p {
+  margin: 0;
+  line-height: 1.5;
+  color: #555;
+}
+
+.file-detail-detection-group-params {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.file-detail-detection-group-params strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 14px;
+}
+
+.file-detail-detection-group-params ul {
+  margin: 4px 0 0 0;
+  padding-left: 20px;
+}
+
+.file-detail-detection-group-params li {
+  margin-bottom: 4px;
+}
+
+.file-detail-detection-instances {
+  font-size: 13px;
+  color: #666;
+}
+
+.file-detail-detection-instances strong {
+  display: block;
+  margin-bottom: 12px;
+  color: #333;
+  font-size: 14px;
+}
+
+.file-detail-detection-instances-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-detail-detection-instance {
+  padding: 10px 12px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #4a90e2;
+}
+
+.file-detail-detection-instance-time {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  font-family: 'Courier New', monospace;
+}
+
+/* Legacy styles for backward compatibility */
 .file-detail-issue {
   border: 1px solid #e0e0e0;
   border-radius: 6px;
