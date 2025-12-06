@@ -103,7 +103,9 @@ const Gallery = ({ files, onFileSelect, selectedFileId, onFilesDeleted, onBulkEx
   };
 
   const handleToggleFileSelection = (fileId, event) => {
-    event.stopPropagation(); // Prevent card click
+    if (event) {
+      event.stopPropagation(); // Prevent card click if called from checkbox
+    }
     setSelectedFiles(prev => {
       const newSet = new Set(prev);
       if (newSet.has(fileId)) {
@@ -214,7 +216,9 @@ const Gallery = ({ files, onFileSelect, selectedFileId, onFilesDeleted, onBulkEx
             key={file.id}
             className={`gallery-item ${selectedFileId === file.id ? 'selected' : ''} ${selectedFiles.has(file.id) ? 'multi-selected' : ''}`}
             onClick={() => {
-              if (!isSelectMode) {
+              if (isSelectMode) {
+                handleToggleFileSelection(file.id);
+              } else {
                 onFileSelect(file);
               }
             }}
@@ -224,8 +228,11 @@ const Gallery = ({ files, onFileSelect, selectedFileId, onFilesDeleted, onBulkEx
                 type="checkbox"
                 className="gallery-item-checkbox"
                 checked={selectedFiles.has(file.id)}
-                onChange={(e) => handleToggleFileSelection(file.id, e)}
-                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => {
+                  e.stopPropagation(); // Prevent card click from firing
+                  handleToggleFileSelection(file.id, e);
+                }}
+                onClick={(e) => e.stopPropagation()} // Prevent card click when clicking checkbox
               />
             )}
             <div className="gallery-item-icon">🎵</div>
