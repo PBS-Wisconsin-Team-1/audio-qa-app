@@ -117,15 +117,15 @@ def main():
                 safe_input("Press Enter to continue...")
                 continue
 
-            clip_padding = safe_input("Enter clip padding in seconds [press Enter to use default (0.1s)]: ")
+            clip_padding = safe_input("Enter clip padding in seconds [press Enter to use default (0.s)]: ")
             if clip_padding == "":
-                clip_padding = 0.1
+                clip_padding = 0.5
             else:
                 try:
                     clip_padding = float(clip_padding)
                 except ValueError:
-                    print("Invalid clip padding value; using default 0.1s.")
-                    clip_padding = 0.1
+                    print("Invalid clip padding value; using default 0.5s.")
+                    clip_padding = 0.5
 
             detection_params = {}
             for idx in det_indices:
