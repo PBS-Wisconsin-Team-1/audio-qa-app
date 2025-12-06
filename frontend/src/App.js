@@ -4,7 +4,8 @@ import QueueProgressBar from './components/QueueProgressBar';
 import FileUpload from './components/FileUpload';
 import FileDetailView from './components/FileDetailView';
 import AudioDirSelector from './components/AudioDirSelector';
-import { getProcessedFiles, getDetectionReport, openCli } from './services/api';
+import { getProcessedFiles, getDetectionReport, deleteFiles, getBulkReports, openCli } from './services/api';
+import { generateTextSummary, downloadTextFile } from './utils/export';
 import './App.css';
 
 function App() {
@@ -67,6 +68,78 @@ function App() {
     setShowUpload(false);
   };
 
+  const handleFilesDeleted = async (fileIds) => {
+    try {
+      await deleteFiles(fileIds);
+      // Reload files list
+      await loadFiles();
+      // Clear selection if deleted file was selected
+      if (selectedFile && fileIds.includes(selectedFile.id)) {
+        setSelectedFile(null);
+        setDetections(null);
+      }
+    } catch (error) {
+      console.error('Error deleting files:', error);
+      throw error; // Re-throw to let Gallery handle the error message
+    }
+  };
+
+  const handleBulkExport = async (fileIds) => {
+    try {
+      const { reports, errors } = await getBulkReports(fileIds);
+      
+      if (errors && errors.length > 0) {
+        console.warn('Some files could not be exported:', errors);
+      }
+      
+      if (reports.length === 0) {
+        alert('No reports could be exported.');
+        return;
+      }
+      
+      // Export each report as an individual file
+      reports.forEach((item, index) => {
+        const { report } = item;
+        const isNewFormat = report && typeof report === 'object' && !Array.isArray(report);
+        const reportTitle = isNewFormat ? report.title : null;
+        const reportFile = isNewFormat ? report.file : `File ${index + 1}`;
+        const overallResults = isNewFormat ? (report.overall_results || []) : [];
+        const detections = isNewFormat ? (report.in_file_detections || []) : (report || []);
+        
+        // Extract metadata
+        const metadataTypes = ['samplerate', 'channels', 'duration'];
+        const metadata = {};
+        const filteredOverallResults = overallResults.filter(result => {
+          const type = result.type.toLowerCase();
+          if (metadataTypes.includes(type)) {
+            metadata[type] = result.result;
+            return false;
+          }
+          return true;
+        });
+        
+        // Generate individual report summary
+        const fileSummary = generateTextSummary(reportFile, reportTitle, filteredOverallResults, detections, metadata);
+        
+        // Create filename from report file name
+        const filename = `${reportFile.replace(/\.[^/.]+$/, '')}_report.txt`;
+        
+        // Add a small delay between downloads to avoid browser blocking multiple downloads
+        setTimeout(() => {
+          downloadTextFile(fileSummary, filename);
+        }, index * 200); // 200ms delay between each download
+      });
+      
+      // Show success message
+      if (reports.length > 0) {
+        alert(`Successfully exported ${reports.length} report(s). Check your downloads folder.`);
+      }
+    } catch (error) {
+      console.error('Error exporting files:', error);
+      throw error; // Re-throw to let Gallery handle the error message
+    }
+  };
+
   const handleOpenCli = async () => {
     try {
       await openCli();
@@ -120,6 +193,7 @@ function App() {
           {showUpload && (
             <FileUpload onUploadSuccess={handleUploadSuccess} />
           )}
+          <AudioDirSelector onDirChange={loadFiles} />
         </div>
 
         <div className="app-content">
@@ -134,6 +208,8 @@ function App() {
                 files={files}
                 onFileSelect={handleFileSelect}
                 selectedFileId={selectedFile?.id}
+                onFilesDeleted={handleFilesDeleted}
+                onBulkExport={handleBulkExport}
               />
               <FileDetailView
                 file={selectedFile}
