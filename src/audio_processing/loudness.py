@@ -42,7 +42,7 @@ def get_loudness_spikes(
     audio: np.ndarray,
     sr: int,
     window_s: float = 0.4,
-    threshold: float = -23.0
+    threshold: float = -16.0
 ) -> List[Tuple[float, float, float]]:
     """
     Find sections of audio where loudness exceeds the specified threshold.

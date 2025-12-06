@@ -14,12 +14,12 @@ ANALYSIS_TYPES = {
     },
     "Cutout": {
         "type": "in-file",
-        "params": {"threshold": 0.0001, "min_len": 50},
+        "params": {"threshold": 0.0001, "min_len": 100},
         "func": detect_cutout
     },
     "Loudness": {
         "type": "in-file",
-        "params": {"loudness_threshold": -23.0, "window_s": 0.4},
+        "params": {"loudness_threshold": -10.0, "window_s": 0.4},
         "func": get_loudness_spikes
     },
     "Overall LUFS": {

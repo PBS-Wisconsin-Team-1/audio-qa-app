@@ -40,7 +40,7 @@ def detect_clipping(audio, sr) -> list[tuple[float, float]]:
     return ditorted_regions
 
 # return list of (start_s, end_s) tuples for cutout regions where both are in seconds [ran by job queue]
-def detect_cutout(audio, sr, threshold=0.0001, min_len=50) -> list[tuple[float, float]]:
+def detect_cutout(audio, sr, threshold=0.0001, min_len=100) -> list[tuple[float, float]]:
     frame_length = int((min_len * sr) / 1000)
     hop_length = frame_length // 2
     rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]

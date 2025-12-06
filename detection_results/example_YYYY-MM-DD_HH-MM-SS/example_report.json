@@ -6,6 +6,21 @@
       "type": "Overall LUFS",
       "params": {},
       "result": -28.40189584017971
+    },
+    {
+      "type": "samplerate",
+      "params": {},
+      "result": 22050
+    },
+    {
+      "type": "channels",
+      "params": {},
+      "result": "mono"
+    },
+    {
+      "type": "Overall LUFS",
+      "params": {},
+      "result": -28.40189584017971
     }
   ],
   "in_file_detections": [
