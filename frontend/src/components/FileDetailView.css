@@ -36,6 +36,13 @@
   margin: 0;
 }
 
+.file-detail-meta-secondary {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0 0 0;
+  font-style: italic;
+}
+
 .file-detail-export-btn {
   background-color: #4a90e2;
   color: white;
