@@ -29,6 +29,7 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .audio-dir-input {
@@ -88,6 +89,31 @@
 
 .audio-dir-reset-btn:hover:not(:disabled) {
   background-color: #e5e5e5;
+}
+
+.audio-dir-browse-btn {
+  padding: 10px 16px;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: white;
+  color: #4a90e2;
+  white-space: nowrap;
+}
+
+.audio-dir-browse-btn:hover:not(:disabled) {
+  background-color: #f0f7ff;
+  border-color: #357abd;
+}
+
+.audio-dir-browse-btn:disabled {
+  background-color: #f5f5f5;
+  border-color: #ddd;
+  color: #999;
+  cursor: not-allowed;
 }
 
 .audio-dir-info {

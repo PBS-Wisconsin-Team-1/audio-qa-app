@@ -53,7 +53,12 @@ function App() {
   };
 
   const handleFileSelect = (file) => {
-    setSelectedFile(file);
+    // Toggle: if clicking the same file, deselect it; otherwise select the new file
+    if (selectedFile && selectedFile.id === file.id) {
+      setSelectedFile(null);
+    } else {
+      setSelectedFile(file);
+    }
   };
 
   const handleUploadSuccess = () => {
