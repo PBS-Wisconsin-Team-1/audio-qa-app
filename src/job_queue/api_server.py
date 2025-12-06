@@ -151,15 +151,23 @@ def open_cli():
                 creationflags=subprocess.CREATE_NEW_CONSOLE
             )
         elif system == 'Darwin':  # macOS
-            subprocess.Popen(
-                ['open', '-a', 'Terminal.app', '-n', '-e', 'auqa-cli']
-            )
+            # Use osascript to open Terminal and run auqa-cli command
+            # The auqa-cli command is defined in pyproject.toml as a console script
+            command = "auqa-cli"
+            escaped_command = command.replace('"', '\\"')
+            osascript_cmd = [
+                'osascript',
+                '-e', 'tell application "Terminal" to activate',
+                '-e', f'tell application "Terminal" to do script "{escaped_command}"'
+            ]
+            subprocess.Popen(osascript_cmd)
         else:  # Linux
             # Try common terminal emulators
+            command = f'auqa-cli'
             terminals = [
-                ['gnome-terminal', '--', 'auqa-cli'],
-                ['xterm', '-e', 'auqa-cli'],
-                ['konsole', '-e', 'auqa-cli']
+                ['gnome-terminal', '--title=AUQA-CLI', '--', 'bash', '-c', f"{command}; exec bash"],
+                ['xterm', '-e', f"bash -c '{command}; exec bash'"],
+                ['konsole', '-e', f"bash -c '{command}; exec bash'"]
             ]
             for term_cmd in terminals:
                 try:

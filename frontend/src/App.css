@@ -50,7 +50,7 @@
 }
 
 .app-cli-button {
-  background-color: #2ecc71;
+  background-color: #4a90e2;
   color: white;
   border: none;
   border-radius: 6px;
@@ -62,7 +62,7 @@
 }
 
 .app-cli-button:hover {
-  background-color: #27ae60;
+  background-color: #357abd;
 }
 
 .app-upload-toggle {
