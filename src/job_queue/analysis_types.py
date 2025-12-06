@@ -14,7 +14,7 @@ ANALYSIS_TYPES = {
     },
     "Cutout": {
         "type": "in-file",
-        "params": {"threshold": 0.001, "min_len": 50},
+        "params": {"threshold": 0.0001, "min_len": 50},
         "func": detect_cutout
     },
     "Loudness": {
