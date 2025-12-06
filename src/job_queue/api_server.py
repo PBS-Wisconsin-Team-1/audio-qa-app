@@ -314,6 +314,89 @@ def export_files():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/detection-types', methods=['GET'])
+def get_detection_types():
+    """Get available detection types and their default parameters."""
+    try:
+        from .analysis_types import ANALYSIS_TYPES
+        
+        detection_types = {}
+        for det_type, config in ANALYSIS_TYPES.items():
+            detection_types[det_type] = {
+                'type': config.get('type', 'in-file'),
+                'params': config.get('params', {}),
+                'description': config.get('description', '')
+            }
+        
+        return jsonify({
+            'detection_types': detection_types
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/queue/job', methods=['POST'])
+def queue_job():
+    """Queue audio files for processing with custom detection types and parameters."""
+    try:
+        data = request.get_json()
+        file_names = data.get('file_names', [])
+        detection_params = data.get('detection_params', {})
+        clip_pad = data.get('clip_pad', 0.1)
+        
+        if not file_names or not isinstance(file_names, list):
+            return jsonify({'error': 'file_names must be a non-empty array'}), 400
+        
+        if not detection_params or not isinstance(detection_params, dict):
+            return jsonify({'error': 'detection_params must be a dictionary'}), 400
+        
+        # Import here to avoid circular imports
+        from audio_processing.audio_import import AudioLoader
+        from .worker import AudioDetectionJob
+        from .analysis_types import ANALYSIS_TYPES
+        from rq import Queue
+        
+        # Validate detection types
+        for det_type in detection_params.keys():
+            if det_type not in ANALYSIS_TYPES:
+                return jsonify({'error': f'Invalid detection type: {det_type}'}), 400
+        
+        AUDIO_FILES_DIR = get_audio_files_dir()
+        loader = AudioLoader(directory=AUDIO_FILES_DIR)
+        
+        # Queue the files
+        try:
+            redis_conn = redis.from_url(REDIS_URL)
+            redis_conn.ping()
+            job_queue = Queue(connection=redis_conn)
+            
+            queued = []
+            errors = []
+            
+            for file_name in file_names:
+                try:
+                    # Validate file exists
+                    file_path = os.path.join(AUDIO_FILES_DIR, file_name)
+                    if not os.path.exists(file_path):
+                        errors.append({'file': file_name, 'error': 'File not found'})
+                        continue
+                    
+                    # Create job and queue it
+                    job = AudioDetectionJob(loader, file_name, REDIS_URL, clip_pad=clip_pad)
+                    job_queue.enqueue(job.load_and_queue, detection_params)
+                    queued.append(file_name)
+                except Exception as e:
+                    errors.append({'file': file_name, 'error': str(e)})
+            
+            return jsonify({
+                'message': f'Queued {len(queued)} file(s) for processing',
+                'queued': queued,
+                'errors': errors
+            })
+        except redis.ConnectionError:
+            return jsonify({'error': 'Redis not available. Please ensure Redis is running.'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/queue/status', methods=['GET'])
 def get_queue_status():
     """Get current queue status from Redis.
