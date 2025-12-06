@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Gallery.css';
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 8;
 
 const Gallery = ({ files, onFileSelect, selectedFileId }) => {
   const [currentPage, setCurrentPage] = useState(1);
