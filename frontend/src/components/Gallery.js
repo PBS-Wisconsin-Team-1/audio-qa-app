@@ -3,9 +3,11 @@ import './Gallery.css';
 
 const ROWS_PER_PAGE = 2;
 
-const Gallery = ({ files, onFileSelect, selectedFileId }) => {
+const Gallery = ({ files, onFileSelect, selectedFileId, onFilesDeleted, onBulkExport }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(8);
+  const [selectedFiles, setSelectedFiles] = useState(new Set());
+  const [isSelectMode, setIsSelectMode] = useState(false);
   const gridRef = useRef(null);
 
   // Reset to page 1 when files change
@@ -93,23 +95,139 @@ const Gallery = ({ files, onFileSelect, selectedFileId }) => {
     setCurrentPage(page);
   };
 
+  const handleToggleSelectMode = () => {
+    setIsSelectMode(!isSelectMode);
+    if (isSelectMode) {
+      setSelectedFiles(new Set()); // Clear selection when exiting select mode
+    }
+  };
+
+  const handleToggleFileSelection = (fileId, event) => {
+    event.stopPropagation(); // Prevent card click
+    setSelectedFiles(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(fileId)) {
+        newSet.delete(fileId);
+      } else {
+        newSet.add(fileId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedFiles.size === currentFiles.length) {
+      setSelectedFiles(new Set());
+    } else {
+      setSelectedFiles(new Set(currentFiles.map(f => f.id)));
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    if (!window.confirm(`Are you sure you want to delete ${selectedFiles.size} file(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      if (onFilesDeleted) {
+        await onFilesDeleted(Array.from(selectedFiles));
+        setSelectedFiles(new Set());
+        setIsSelectMode(false);
+      }
+    } catch (error) {
+      console.error('Error deleting files:', error);
+      alert('Failed to delete files. Please try again.');
+    }
+  };
+
+  const handleExportSelected = async () => {
+    if (selectedFiles.size === 0) return;
+    
+    try {
+      if (onBulkExport) {
+        await onBulkExport(Array.from(selectedFiles));
+        setSelectedFiles(new Set());
+        setIsSelectMode(false);
+      }
+    } catch (error) {
+      console.error('Error exporting files:', error);
+      alert('Failed to export files. Please try again.');
+    }
+  };
+
   return (
     <div className="gallery">
       <div className="gallery-header">
-        <h2 className="gallery-title">Processed Files</h2>
-        {totalPages > 1 && (
-          <p className="gallery-page-info">
-            Page {currentPage} of {totalPages} ({files.length} total)
-          </p>
-        )}
+        <div className="gallery-header-left">
+          <h2 className="gallery-title">Processed Files</h2>
+          {totalPages > 1 && (
+            <p className="gallery-page-info">
+              Page {currentPage} of {totalPages} ({files.length} total)
+            </p>
+          )}
+        </div>
+        <div className="gallery-header-actions">
+          {!isSelectMode ? (
+            <button
+              className="gallery-action-btn gallery-select-btn"
+              onClick={handleToggleSelectMode}
+            >
+              Select Files
+            </button>
+          ) : (
+            <>
+              <button
+                className="gallery-action-btn gallery-select-all-btn"
+                onClick={handleSelectAll}
+              >
+                {selectedFiles.size === currentFiles.length ? 'Deselect All' : 'Select All'}
+              </button>
+              <button
+                className="gallery-action-btn gallery-export-btn"
+                onClick={handleExportSelected}
+                disabled={selectedFiles.size === 0}
+              >
+                Export Report ({selectedFiles.size})
+              </button>
+              <button
+                className="gallery-action-btn gallery-delete-btn"
+                onClick={handleDeleteSelected}
+                disabled={selectedFiles.size === 0}
+              >
+                Delete Selected ({selectedFiles.size})
+              </button>
+              <button
+                className="gallery-action-btn gallery-cancel-btn"
+                onClick={handleToggleSelectMode}
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
       </div>
       <div className="gallery-grid" ref={gridRef}>
         {currentFiles.map((file) => (
           <div
             key={file.id}
-            className={`gallery-item ${selectedFileId === file.id ? 'selected' : ''}`}
-            onClick={() => onFileSelect(file)}
+            className={`gallery-item ${selectedFileId === file.id ? 'selected' : ''} ${selectedFiles.has(file.id) ? 'multi-selected' : ''}`}
+            onClick={() => {
+              if (!isSelectMode) {
+                onFileSelect(file);
+              }
+            }}
           >
+            {isSelectMode && (
+              <input
+                type="checkbox"
+                className="gallery-item-checkbox"
+                checked={selectedFiles.has(file.id)}
+                onChange={(e) => handleToggleFileSelection(file.id, e)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            )}
             <div className="gallery-item-icon">🎵</div>
             <div className="gallery-item-info">
               <h3 className="gallery-item-name">{file.name}</h3>

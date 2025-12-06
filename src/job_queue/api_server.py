@@ -6,6 +6,7 @@ import os
 import sys
 import json
 import redis
+import shutil
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
@@ -191,6 +192,91 @@ def get_clip(file_id, clip_filename):
         
         # Serve the audio file
         return send_from_directory(clips_dir, clip_filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/delete', methods=['POST'])
+def delete_files():
+    """Delete one or more processed files."""
+    try:
+        data = request.get_json()
+        file_ids = data.get('file_ids', [])
+        
+        if not file_ids or not isinstance(file_ids, list):
+            return jsonify({'error': 'file_ids must be a non-empty array'}), 400
+        
+        deleted = []
+        errors = []
+        
+        for file_id in file_ids:
+            try:
+                file_dir = os.path.join(DETECTION_RESULTS_DIR, file_id)
+                
+                # Security check: ensure the directory is within DETECTION_RESULTS_DIR
+                if not os.path.abspath(file_dir).startswith(os.path.abspath(DETECTION_RESULTS_DIR)):
+                    errors.append({'file_id': file_id, 'error': 'Invalid file path'})
+                    continue
+                
+                if os.path.exists(file_dir):
+                    shutil.rmtree(file_dir)
+                    deleted.append(file_id)
+                else:
+                    errors.append({'file_id': file_id, 'error': 'File not found'})
+            except Exception as e:
+                errors.append({'file_id': file_id, 'error': str(e)})
+        
+        return jsonify({
+            'deleted': deleted,
+            'errors': errors,
+            'message': f'Deleted {len(deleted)} file(s)'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/export', methods=['POST'])
+def export_files():
+    """Get reports for multiple files for bulk export."""
+    try:
+        data = request.get_json()
+        file_ids = data.get('file_ids', [])
+        
+        if not file_ids or not isinstance(file_ids, list):
+            return jsonify({'error': 'file_ids must be a non-empty array'}), 400
+        
+        reports = []
+        errors = []
+        
+        for file_id in file_ids:
+            try:
+                file_dir = os.path.join(DETECTION_RESULTS_DIR, file_id)
+                if not os.path.exists(file_dir):
+                    errors.append({'file_id': file_id, 'error': 'File not found'})
+                    continue
+                
+                # Look for report JSON
+                report_file = None
+                for file in os.listdir(file_dir):
+                    if file.endswith('_report.json'):
+                        report_file = os.path.join(file_dir, file)
+                        break
+                
+                if not report_file:
+                    errors.append({'file_id': file_id, 'error': 'Report not found'})
+                    continue
+                
+                with open(report_file, 'r') as f:
+                    report_data = json.load(f)
+                    reports.append({
+                        'file_id': file_id,
+                        'report': report_data
+                    })
+            except Exception as e:
+                errors.append({'file_id': file_id, 'error': str(e)})
+        
+        return jsonify({
+            'reports': reports,
+            'errors': errors
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

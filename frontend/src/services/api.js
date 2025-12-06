@@ -140,3 +140,57 @@ export const listAudioFiles = async () => {
   }
 };
 
+/**
+ * Delete one or more processed files
+ */
+export const deleteFiles = async (fileIds) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ file_ids: fileIds }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to delete files';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error deleting files:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get reports for multiple files (for bulk export)
+ */
+export const getBulkReports = async (fileIds) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files/export`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ file_ids: fileIds }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to fetch reports';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching bulk reports:', error);
+    throw error;
+  }
+};
+
