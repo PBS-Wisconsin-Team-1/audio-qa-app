@@ -14,6 +14,7 @@ JOB_QUEUE_DIR="$SCRIPT_DIR/../src/job_queue"
 API_DIR="$SCRIPT_DIR/../src/job_queue"
 PID_DIR="$SCRIPT_DIR/tmp"
 PID_FILE="$PID_DIR/auqa-pids.txt"
+FRONTEND_DIR="$SCRIPT_DIR/../frontend"
 mkdir -p "$PID_DIR"
 echo -n > "$PID_FILE"
 
@@ -92,7 +93,7 @@ echo "Starting Queue CLI..."
 if [[ "$MACHINE" == "Mac" ]]; then
     osascript -e "tell application \"Terminal\" to activate" -e "tell application \"Terminal\" to do script \"cd '$SCRIPT_DIR/..' && auqa-cli\"" > /dev/null 2>&1 &
 elif [[ "$MACHINE" == "Linux" ]]; then
-    gnome-terminal --title="AUQA-QUEUER" -- bash -c "cd $SCRIPT_DIR/.. && auqa-cli; exec bash" 2>/dev/null &
+    gnome-terminal --title="AUQA-QUEUER" -- bash -c "cd $FRONTEND_DIR && npm start; exec bash" 2>/dev/null &
 fi
 sleep 2
 echo ""

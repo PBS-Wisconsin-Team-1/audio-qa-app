@@ -6,6 +6,8 @@ import os
 import sys
 import json
 import redis
+import subprocess
+import platform
 import shutil
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
@@ -134,6 +136,38 @@ def get_processed_files():
     # Sort by processed date (newest first)
     files.sort(key=lambda x: x['processedDate'], reverse=True)
     return files
+
+@app.route('/api/open-cli', methods=['POST'])
+def open_cli():
+    """Open the AUQA CLI in a new terminal window."""
+    try:
+        cli_script = os.path.join(SCRIPT_DIR, 'queue_cli.py')
+        system = platform.system()
+        
+        if system == 'Windows':
+            # Open PowerShell with CLI
+            subprocess.Popen(
+                ['powershell.exe', '-NoExit', '-Command', 
+                 f'cd "{SCRIPT_DIR}"; auqa-cli'],
+                creationflags=subprocess.CREATE_NEW_CONSOLE
+            )
+        elif system == 'Darwin':  # macOS
+            subprocess.Popen(
+                ['open', '-a', 'Terminal', cli_script]
+            )
+        else:  # Linux
+            # Try common terminal emulators
+            terminals = ['gnome-terminal', 'xterm', 'konsole']
+            for term in terminals:
+                try:
+                    subprocess.Popen([term, '--', 'python', cli_script])
+                    break
+                except FileNotFoundError:
+                    continue
+        
+        return jsonify({'message': 'CLI opened successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/files', methods=['GET'])
 def list_files():

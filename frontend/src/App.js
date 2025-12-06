@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Gallery from './components/Gallery';
 import QueueProgressBar from './components/QueueProgressBar';
-import FileUpload from './components/FileUpload';
 import ProcessFiles from './components/ProcessFiles';
 import FileDetailView from './components/FileDetailView';
 import AudioDirSelector from './components/AudioDirSelector';
-import { getProcessedFiles, getDetectionReport, deleteFiles, getBulkReports } from './services/api';
+import { getProcessedFiles, getDetectionReport, deleteFiles, getBulkReports, openCli } from './services/api';
 import { generateTextSummary, downloadTextFile } from './utils/export';
 import './App.css';
 
@@ -62,10 +61,6 @@ function App() {
     }
   };
 
-  const handleUploadSuccess = () => {
-    // Reload files after successful upload
-    loadFiles();
-  };
 
   const handleJobQueued = () => {
     // Reload files after job is queued
@@ -144,6 +139,16 @@ function App() {
     }
   };
 
+  const handleOpenCli = async () => {
+    try {
+      await openCli();
+      alert('AUQA CLI opened in a new terminal window on the server.');
+    } catch (err) {
+      alert('Failed to open CLI. Make sure the API server is running.');
+      console.error(err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="app-loading">
@@ -162,6 +167,15 @@ function App() {
             <strong>AuQA</strong>
           </h1>
           <h2>Audio Quality Assurance Application</h2>
+        </div>
+        <div className="app-header-buttons">
+          <button
+            className="app-cli-button"
+            onClick={handleOpenCli}
+            title="Open AUQA CLI in terminal"
+          >
+            Open CLI
+          </button>
         </div>
       </header>
 
