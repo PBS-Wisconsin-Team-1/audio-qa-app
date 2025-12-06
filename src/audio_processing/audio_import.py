@@ -1,6 +1,7 @@
 import os
 import librosa
 from pydub import AudioSegment
+import numpy as np
 
 # default location for audio files is in "audio-qa-app/audio_files"
 AUDIO_DIR = os.path.join("..", "audio_files")
@@ -52,10 +53,19 @@ class AudioLoader:
         print("Loading:", filepath)
         if self.is_valid_audio_file(filename):
             if type == "numpy":
-                data, samplerate = librosa.load(filepath, sr=self.sr, mono=self.mono)
+                data, samplerate = librosa.load(filepath, sr=self.sr, mono=False)
+                channels = 'mono'
+                if data.ndim >= 2:
+                    if data.ndim == 2:
+                        channels = 'stereo'
+                    else:
+                        channels = 'multi-channel (' + str(data.shape[0]) + ' channels)'
+                    data = np.mean(data, axis=0)
                 return {
                     "data": data,
-                    "samplerate": samplerate
+                    "samplerate": samplerate,
+                    "channels": channels,
+                    "duration_sec": len(data) / samplerate
                 }
             elif type == "pydub":
                 audio = AudioSegment.from_file(filepath)
