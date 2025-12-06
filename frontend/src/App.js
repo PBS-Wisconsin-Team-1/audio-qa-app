@@ -14,7 +14,6 @@ function App() {
   const [detections, setDetections] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showUpload, setShowUpload] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -65,7 +64,6 @@ function App() {
   const handleUploadSuccess = () => {
     // Reload files after successful upload
     loadFiles();
-    setShowUpload(false);
   };
 
   const handleFilesDeleted = async (fileIds) => {
@@ -159,21 +157,13 @@ function App() {
           </h1>
           <h2>Audio Quality Assurance Application</h2>
         </div>
-        <button
-          className="app-upload-toggle"
-          onClick={() => setShowUpload(!showUpload)}
-        >
-          {showUpload ? 'Hide Upload' : 'Upload File'}
-        </button>
       </header>
 
       <main className="app-main">
         <div className="app-sidebar">
-          <AudioDirSelector onDirChange={loadFiles} />
           <QueueProgressBar />
-          {showUpload && (
-            <FileUpload onUploadSuccess={handleUploadSuccess} />
-          )}
+          <FileUpload onUploadSuccess={handleUploadSuccess} />
+          <AudioDirSelector onDirChange={loadFiles} />
         </div>
 
         <div className="app-content">
