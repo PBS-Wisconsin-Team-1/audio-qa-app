@@ -39,5 +39,5 @@ for ($i = 1; $i -le $workers; $i++) {
 
 # Start Client CLI in new PowerShell window using venv Python
 Start-Sleep -Seconds 1
-${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-CLIENT'; cd '$frontendDir'; npm start" -WindowStyle Normal -PassThru
+${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-DASHBOARD'; cd '$frontendDir'; npm start" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p3.Id
