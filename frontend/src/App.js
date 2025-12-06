@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Gallery from './components/Gallery';
 import QueueProgressBar from './components/QueueProgressBar';
 import FileUpload from './components/FileUpload';
+import ProcessFiles from './components/ProcessFiles';
 import FileDetailView from './components/FileDetailView';
 import AudioDirSelector from './components/AudioDirSelector';
 import { getProcessedFiles, getDetectionReport, deleteFiles, getBulkReports } from './services/api';
@@ -63,6 +64,11 @@ function App() {
 
   const handleUploadSuccess = () => {
     // Reload files after successful upload
+    loadFiles();
+  };
+
+  const handleJobQueued = () => {
+    // Reload files after job is queued
     loadFiles();
   };
 
@@ -162,7 +168,7 @@ function App() {
       <main className="app-main">
         <div className="app-sidebar">
           <QueueProgressBar />
-          <FileUpload onUploadSuccess={handleUploadSuccess} />
+          <ProcessFiles onJobQueued={handleJobQueued} />
           <AudioDirSelector onDirChange={loadFiles} />
         </div>
 

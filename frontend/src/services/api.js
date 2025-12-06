@@ -194,3 +194,50 @@ export const getBulkReports = async (fileIds) => {
   }
 };
 
+/**
+ * Get available detection types and their default parameters
+ */
+export const getDetectionTypes = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/detection-types`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch detection types');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching detection types:', error);
+    throw error;
+  }
+};
+
+/**
+ * Queue audio files for processing with custom detection types and parameters
+ */
+export const queueJob = async (fileNames, detectionParams, clipPad = 0.1) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/queue/job`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        file_names: fileNames,
+        detection_params: detectionParams,
+        clip_pad: clipPad
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to queue job';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error queueing job:', error);
+    throw error;
+  }
+};
+
