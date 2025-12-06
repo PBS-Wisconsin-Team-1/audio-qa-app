@@ -37,8 +37,20 @@ const FileDetailView = ({ file, report }) => {
   const isNewFormat = report && typeof report === 'object' && !Array.isArray(report);
   const reportTitle = isNewFormat ? report.title : null;
   const reportFile = isNewFormat ? report.file : file.name;
-  const overallResults = isNewFormat ? (report.overall_results || []) : [];
+  const allOverallResults = isNewFormat ? (report.overall_results || []) : [];
   const detections = isNewFormat ? (report.in_file_detections || []) : (report || []);
+
+  // Extract metadata (samplerate, channels, duration) from overallResults
+  const metadataTypes = ['samplerate', 'channels', 'duration'];
+  const metadata = {};
+  const overallResults = allOverallResults.filter(result => {
+    const type = result.type.toLowerCase();
+    if (metadataTypes.includes(type)) {
+      metadata[type] = result.result;
+      return false; // Don't include in overallResults display
+    }
+    return true; // Keep in overallResults display
+  });
 
   // Group detections by type
   const detectionsByType = detections.reduce((acc, detection) => {
@@ -121,7 +133,7 @@ const FileDetailView = ({ file, report }) => {
   };
 
   const handleExport = () => {
-    const summary = generateTextSummary(reportFile, reportTitle, overallResults, detections);
+    const summary = generateTextSummary(reportFile, reportTitle, overallResults, detections, metadata);
     const filename = `${reportFile.replace(/\.[^/.]+$/, '')}_report.txt`;
     downloadTextFile(summary, filename);
   };
@@ -149,8 +161,26 @@ const FileDetailView = ({ file, report }) => {
         <div>
           <h2 className="file-detail-title">{reportTitle || reportFile}</h2>
           <p className="file-detail-meta">
-            File: {reportFile} • Processed on {file.processedDate}
+            Processed on {file.processedDate}
+            {metadata.duration && (
+              <> • Duration: {metadata.duration}</>
+            )}
           </p>
+          {(metadata.samplerate || metadata.channels) && (
+            <p className="file-detail-meta-secondary">
+              {metadata.samplerate && (
+                <>Sample Rate: {typeof metadata.samplerate === 'number' ? metadata.samplerate.toFixed(0) : metadata.samplerate} Hz</>
+              )}
+              {metadata.samplerate && metadata.channels && ' • '}
+              {metadata.channels && (
+                <>Channels: {
+                  typeof metadata.channels === 'number' 
+                    ? (metadata.channels === 1 ? 'mono' : metadata.channels === 2 ? 'stereo' : `${metadata.channels} channels`)
+                    : metadata.channels
+                }</>
+              )}
+            </p>
+          )}
         </div>
         <button
           className="file-detail-export-btn"

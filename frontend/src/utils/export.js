@@ -1,11 +1,30 @@
 /**
  * Generate a text summary of all detected issues
  */
-export const generateTextSummary = (fileName, reportTitle, overallResults, detections) => {
+export const generateTextSummary = (fileName, reportTitle, overallResults, detections, metadata = {}) => {
   let summary = reportTitle ? `${reportTitle}\n` : `AuQA Report\n`;
   summary += `================================\n\n`;
   summary += `File: ${fileName}\n`;
-  summary += `Generated: ${new Date().toLocaleString()}\n\n`;
+  summary += `Generated: ${new Date().toLocaleString()}\n`;
+  
+  // Add metadata if available
+  if (metadata.duration) {
+    summary += `Duration: ${metadata.duration}\n`;
+  }
+  if (metadata.samplerate) {
+    const samplerate = typeof metadata.samplerate === 'number' 
+      ? metadata.samplerate.toFixed(0) 
+      : metadata.samplerate;
+    summary += `Sample Rate: ${samplerate} Hz\n`;
+  }
+  if (metadata.channels) {
+    const channels = typeof metadata.channels === 'number' 
+      ? (metadata.channels === 1 ? 'mono' : metadata.channels === 2 ? 'stereo' : `${metadata.channels} channels`)
+      : metadata.channels;
+    summary += `Channels: ${channels}\n`;
+  }
+  
+  summary += `\n`;
   
   const hasOverallResults = overallResults && overallResults.length > 0;
   const hasDetections = detections && detections.length > 0;
@@ -54,26 +73,99 @@ export const generateTextSummary = (fileName, reportTitle, overallResults, detec
     });
     summary += `\n`;
     
-    // Detailed list
+    // Detailed list - grouped by type with parameters shown once
     summary += `Detailed Issue List:\n`;
     summary += `--------------------\n\n`;
     
-    detections.forEach((detection, index) => {
-      summary += `${index + 1}. ${detection.type}\n`;
-      summary += `   Time: ${detection.start_mmss}`;
-      if (detection.end !== null && detection.end_mmss !== 'N/A') {
-        summary += ` - ${detection.end_mmss}`;
+    let globalIndex = 1;
+    Object.entries(issuesByType).forEach(([type, typeDetections]) => {
+      const firstDetection = typeDetections[0];
+      const params = firstDetection.params || {};
+      
+      // Get common details text (same for all instances of this type)
+      let commonDetails = null;
+      if (firstDetection.details) {
+        let detailsText = firstDetection.details;
+        // Remove ClipDaT algorithm messages for Clipping
+        if (type === 'Clipping') {
+          detailsText = detailsText.replace(/Detected using clipdetect library's ClipDaT algorithm implementation/gi, '');
+          detailsText = detailsText.replace(/Clipping detected by ClipDaT algorithm/gi, '');
+          detailsText = detailsText.replace(/Clipping detected/gi, '').trim();
+          if (!detailsText || detailsText.length === 0) {
+            detailsText = null;
+          }
+        }
+        // Only show details if they're the same across all instances
+        const allSameDetails = typeDetections.every(d => {
+          let dDetails = d.details || '';
+          if (type === 'Clipping') {
+            dDetails = dDetails.replace(/Detected using clipdetect library's ClipDaT algorithm implementation/gi, '');
+            dDetails = dDetails.replace(/Clipping detected by ClipDaT algorithm/gi, '');
+            dDetails = dDetails.replace(/Clipping detected/gi, '').trim();
+          }
+          return dDetails === detailsText;
+        });
+        if (allSameDetails && detailsText) {
+          commonDetails = detailsText;
+        }
       }
-      summary += `\n`;
-      // Clean up details - remove clipdetect library reference
-      const cleanDetails = detection.details && detection.details.includes('clipdetect library')
-        ? (detection.type === 'Clipping' ? 'Clipping detected' : detection.details)
-        : detection.details;
-      summary += `   Details: ${cleanDetails}\n`;
-      if (detection.params && Object.keys(detection.params).length > 0) {
-        summary += `   Parameters: ${JSON.stringify(detection.params)}\n`;
+      
+      // Format parameter helper function
+      const formatParameter = (key, value) => {
+        let displayValue = value;
+        let unit = '';
+        
+        if (typeof value === 'boolean') {
+          displayValue = value ? 'enabled' : 'disabled';
+        } else if (typeof value === 'number') {
+          if (key === 'min_len' || key.includes('ms') || key.includes('duration')) {
+            unit = ' ms';
+          } else if (key === 'threshold') {
+            displayValue = Number.isInteger(value) ? value : value.toFixed(3);
+          } else if (key.includes('window') || key.includes('time')) {
+            unit = ' s';
+            displayValue = Number.isInteger(value) ? value : value.toFixed(2);
+          } else {
+            displayValue = Number.isInteger(value) ? value : value.toFixed(3);
+          }
+        }
+        
+        const formattedKey = key
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+        
+        return { formattedKey, displayValue, unit };
+      };
+      
+      summary += `${type} (${typeDetections.length} detection${typeDetections.length !== 1 ? 's' : ''})\n`;
+      summary += `${'='.repeat(type.length + 20)}\n`;
+      
+      // Show common description once
+      if (commonDetails) {
+        summary += `Description: ${commonDetails}\n`;
       }
+      
+      // Show parameters once at the top (if any)
+      if (Object.keys(params).length > 0) {
+        summary += `Detection Parameters:\n`;
+        Object.entries(params).forEach(([key, value]) => {
+          const { formattedKey, displayValue, unit } = formatParameter(key, value);
+          summary += `  ${formattedKey}: ${displayValue}${unit}\n`;
+        });
+      }
+      
+      // List all timestamps
+      summary += `Detection Instances:\n`;
+      typeDetections.forEach((detection) => {
+        summary += `  • ${detection.start_mmss}`;
+        if (detection.end !== null && detection.end_mmss !== 'N/A') {
+          summary += ` - ${detection.end_mmss}`;
+        }
+        summary += `\n`;
+      });
+      
       summary += `\n`;
+      globalIndex += typeDetections.length;
     });
   }
   
