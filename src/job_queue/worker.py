@@ -142,8 +142,8 @@ class AudioDetectionJob:
                 overall_results.append(detection)
         
         # Convert Detection objects to dicts for JSON serialization
-        overall_results = []
-        overall_results.extend(
+        overall = []
+        overall.extend(
             [
                 {
                     "type": "samplerate",
@@ -162,7 +162,7 @@ class AudioDetectionJob:
                 }
             ]
         )
-        overall_results.extend(
+        overall.extend(
             [
                 {
                     "type": d.type,
@@ -175,7 +175,7 @@ class AudioDetectionJob:
         results_dicts = {
             "title": "AuQA Report for " + self.audio_file,
             "file": self.audio_file,
-            "overall_results": overall_results,
+            "overall_results": overall,
             "in_file_detections": [
                 {
                     "type": d.type,
