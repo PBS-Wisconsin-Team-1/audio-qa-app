@@ -1,23 +1,49 @@
-[
-  {
-    "type": "Cutout",
-    "start": 0.0,
-    "end": 0.42480725623582766,
-    "params": {
-      "threshold": 0.001,
-      "min_len": 50
+{
+  "title": "Example AuQA Report",
+  "file": "Example",
+  "overall_results": [
+    {
+      "type": "Overall LUFS",
+      "params": {},
+      "result": -28.40189584017971
+    }
+  ],
+  "in_file_detections": [
+    {
+      "type": "Cutout",
+      "id": 0,
+      "start": 0.0,
+      "end": 0.425,
+      "params": {
+        "threshold": 0.001,
+        "min_len": 50
+      },
+      "start_mmss": "00:00.00",
+      "end_mmss": "00:00.42",
+      "details": "Less than 0.001 RMS detected for at least 50 ms"
     },
-    "start_mmss": "00:00.00",
-    "end_mmss": "00:00.42",
-    "details": "Less than 0.001 RMS detected for at least 50 ms"
-  },
-  {
-    "type": "Clipping",
-    "start": 1.0526077097505668,
-    "end": 1.0526530612244898,
-    "params": {},
-    "start_mmss": "00:01.05",
-    "end_mmss": "00:01.05",
-    "details": "Detected using clipdetect library's ClipDaT algorithm implementation"
-  }
-]
+    {
+      "type": "Loudness",
+      "id": 0,
+      "start": 0.8,
+      "end": 1.4,
+      "params": {
+        "window_s": 0.4,
+        "threshold": -23.0
+      },
+      "start_mmss": "00:00.80",
+      "end_mmss": "00:01.40",
+      "details": "Loudness exceeded -23.0 LUFS"
+    },
+    {
+      "type": "Clipping",
+      "id": 0,
+      "start": 1.053,
+      "end": 1.053,
+      "params": {},
+      "start_mmss": "00:01.05",
+      "end_mmss": "00:01.05",
+      "details": "Clipping detected by ClipDaT algorithm"
+    }
+  ]
+}
