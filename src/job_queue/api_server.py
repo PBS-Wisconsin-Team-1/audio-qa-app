@@ -6,6 +6,9 @@ import os
 import sys
 import json
 import redis
+import subprocess
+import platform
+import shutil
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 from datetime import datetime
@@ -134,6 +137,49 @@ def get_processed_files():
     files.sort(key=lambda x: x['processedDate'], reverse=True)
     return files
 
+@app.route('/api/open-cli', methods=['POST'])
+def open_cli():
+    """Open the AUQA CLI in a new terminal window."""
+    try:
+        cli_script = os.path.join(SCRIPT_DIR, 'queue_cli.py')
+        system = platform.system()
+        
+        if system == 'Windows':
+            # Open PowerShell with CLI (window closes when CLI exits)
+            subprocess.Popen(
+                ['powershell.exe', '-Command', 'auqa-cli'],
+                creationflags=subprocess.CREATE_NEW_CONSOLE
+            )
+        elif system == 'Darwin':  # macOS
+            # Use osascript to open Terminal and run auqa-cli command
+            # The auqa-cli command is defined in pyproject.toml as a console script
+            command = "auqa-cli"
+            escaped_command = command.replace('"', '\\"')
+            osascript_cmd = [
+                'osascript',
+                '-e', 'tell application "Terminal" to activate',
+                '-e', f'tell application "Terminal" to do script "{escaped_command}"'
+            ]
+            subprocess.Popen(osascript_cmd)
+        else:  # Linux
+            # Try common terminal emulators
+            command = f'auqa-cli'
+            terminals = [
+                ['gnome-terminal', '--title=AUQA-CLI', '--', 'bash', '-c', f"{command}; exec bash"],
+                ['xterm', '-e', f"bash -c '{command}; exec bash'"],
+                ['konsole', '-e', f"bash -c '{command}; exec bash'"]
+            ]
+            for term_cmd in terminals:
+                try:
+                    subprocess.Popen(term_cmd)
+                    break
+                except FileNotFoundError:
+                    continue
+        
+        return jsonify({'message': 'CLI opened successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/files', methods=['GET'])
 def list_files():
     """Get list of all processed files."""
@@ -169,25 +215,296 @@ def get_report(file_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/files/<file_id>/clips/<clip_filename>', methods=['GET'])
+def get_clip(file_id, clip_filename):
+    """Serve audio clip file for a specific detection."""
+    try:
+        # Find the clips directory
+        file_dir = os.path.join(DETECTION_RESULTS_DIR, file_id)
+        clips_dir = os.path.join(file_dir, 'clips')
+        
+        if not os.path.exists(clips_dir):
+            return jsonify({'error': 'Clips directory not found'}), 404
+        
+        clip_path = os.path.join(clips_dir, clip_filename)
+        
+        # Security check: ensure the clip is within the clips directory
+        if not os.path.abspath(clip_path).startswith(os.path.abspath(clips_dir)):
+            return jsonify({'error': 'Invalid clip path'}), 400
+        
+        if not os.path.exists(clip_path):
+            return jsonify({'error': 'Clip not found'}), 404
+        
+        # Serve the audio file
+        return send_from_directory(clips_dir, clip_filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/delete', methods=['POST'])
+def delete_files():
+    """Delete one or more processed files."""
+    try:
+        data = request.get_json()
+        file_ids = data.get('file_ids', [])
+        
+        if not file_ids or not isinstance(file_ids, list):
+            return jsonify({'error': 'file_ids must be a non-empty array'}), 400
+        
+        deleted = []
+        errors = []
+        
+        for file_id in file_ids:
+            try:
+                file_dir = os.path.join(DETECTION_RESULTS_DIR, file_id)
+                
+                # Security check: ensure the directory is within DETECTION_RESULTS_DIR
+                if not os.path.abspath(file_dir).startswith(os.path.abspath(DETECTION_RESULTS_DIR)):
+                    errors.append({'file_id': file_id, 'error': 'Invalid file path'})
+                    continue
+                
+                if os.path.exists(file_dir):
+                    shutil.rmtree(file_dir)
+                    deleted.append(file_id)
+                else:
+                    errors.append({'file_id': file_id, 'error': 'File not found'})
+            except Exception as e:
+                errors.append({'file_id': file_id, 'error': str(e)})
+        
+        return jsonify({
+            'deleted': deleted,
+            'errors': errors,
+            'message': f'Deleted {len(deleted)} file(s)'
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/files/export', methods=['POST'])
+def export_files():
+    """Get reports for multiple files for bulk export."""
+    try:
+        data = request.get_json()
+        file_ids = data.get('file_ids', [])
+        
+        if not file_ids or not isinstance(file_ids, list):
+            return jsonify({'error': 'file_ids must be a non-empty array'}), 400
+        
+        reports = []
+        errors = []
+        
+        for file_id in file_ids:
+            try:
+                file_dir = os.path.join(DETECTION_RESULTS_DIR, file_id)
+                if not os.path.exists(file_dir):
+                    errors.append({'file_id': file_id, 'error': 'File not found'})
+                    continue
+                
+                # Look for report JSON
+                report_file = None
+                for file in os.listdir(file_dir):
+                    if file.endswith('_report.json'):
+                        report_file = os.path.join(file_dir, file)
+                        break
+                
+                if not report_file:
+                    errors.append({'file_id': file_id, 'error': 'Report not found'})
+                    continue
+                
+                with open(report_file, 'r') as f:
+                    report_data = json.load(f)
+                    reports.append({
+                        'file_id': file_id,
+                        'report': report_data
+                    })
+            except Exception as e:
+                errors.append({'file_id': file_id, 'error': str(e)})
+        
+        return jsonify({
+            'reports': reports,
+            'errors': errors
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/detection-types', methods=['GET'])
+def get_detection_types():
+    """Get available detection types and their default parameters."""
+    try:
+        from .analysis_types import ANALYSIS_TYPES
+        
+        detection_types = {}
+        for det_type, config in ANALYSIS_TYPES.items():
+            detection_types[det_type] = {
+                'type': config.get('type', 'in-file'),
+                'params': config.get('params', {}),
+                'description': config.get('description', '')
+            }
+        
+        return jsonify({
+            'detection_types': detection_types
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/queue/job', methods=['POST'])
+def queue_job():
+    """Queue audio files for processing with custom detection types and parameters."""
+    try:
+        data = request.get_json()
+        file_names = data.get('file_names', [])
+        detection_params = data.get('detection_params', {})
+        clip_pad = data.get('clip_pad', 0.1)
+        
+        if not file_names or not isinstance(file_names, list):
+            return jsonify({'error': 'file_names must be a non-empty array'}), 400
+        
+        if not detection_params or not isinstance(detection_params, dict):
+            return jsonify({'error': 'detection_params must be a dictionary'}), 400
+        
+        # Import here to avoid circular imports
+        from audio_processing.audio_import import AudioLoader
+        from .worker import AudioDetectionJob
+        from .analysis_types import ANALYSIS_TYPES
+        from rq import Queue
+        
+        # Validate detection types
+        for det_type in detection_params.keys():
+            if det_type not in ANALYSIS_TYPES:
+                return jsonify({'error': f'Invalid detection type: {det_type}'}), 400
+        
+        AUDIO_FILES_DIR = get_audio_files_dir()
+        loader = AudioLoader(directory=AUDIO_FILES_DIR)
+        
+        # Queue the files
+        try:
+            redis_conn = redis.from_url(REDIS_URL)
+            redis_conn.ping()
+            job_queue = Queue(connection=redis_conn)
+            
+            queued = []
+            errors = []
+            
+            for file_name in file_names:
+                try:
+                    # Validate file exists
+                    file_path = os.path.join(AUDIO_FILES_DIR, file_name)
+                    if not os.path.exists(file_path):
+                        errors.append({'file': file_name, 'error': 'File not found'})
+                        continue
+                    
+                    # Create job and queue it
+                    job = AudioDetectionJob(loader, file_name, REDIS_URL, clip_pad=clip_pad)
+                    job_queue.enqueue(job.load_and_queue, detection_params)
+                    queued.append(file_name)
+                except Exception as e:
+                    errors.append({'file': file_name, 'error': str(e)})
+            
+            return jsonify({
+                'message': f'Queued {len(queued)} file(s) for processing',
+                'queued': queued,
+                'errors': errors
+            })
+        except redis.ConnectionError:
+            return jsonify({'error': 'Redis not available. Please ensure Redis is running.'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/queue/status', methods=['GET'])
 def get_queue_status():
-    """Get current queue status from Redis."""
+    """Get current queue status from Redis.
+    
+    Optional query parameter:
+    - since: Unix timestamp - only count jobs created after this time
+    """
     try:
         redis_conn = redis.from_url(REDIS_URL)
+        
+        # Get optional 'since' timestamp parameter
+        since_timestamp = request.args.get('since', type=int)
         
         # Get all job statuses
         job_statuses = redis_conn.hgetall('job_status')
         
-        total = len(job_statuses)
-        completed = sum(1 for status in job_statuses.values() if status.decode('utf-8') == 'completed')
-        queued = sum(1 for status in job_statuses.values() if status.decode('utf-8') == 'queued')
-        in_progress = total - completed - queued
+        # Filter by timestamp if provided and group by file
+        # Job keys are in format: {audio_base}_{type}_{timestamp}
+        # We want to group by {audio_base}_{timestamp} to count files, not individual detection jobs
+        
+        file_groups = {}  # Key: {audio_base}_{timestamp}, Value: list of (job_key, status)
+        
+        for job_key, status in job_statuses.items():
+            job_key_str = job_key.decode('utf-8') if isinstance(job_key, bytes) else job_key
+            status_str = status.decode('utf-8') if isinstance(status, bytes) else status
+            
+            # Extract timestamp from the key
+            try:
+                # Split by underscore and get the last part (timestamp)
+                parts = job_key_str.rsplit('_', 1)
+                if len(parts) == 2:
+                    job_timestamp = int(parts[1])
+                    
+                    # Filter by timestamp if provided
+                    if since_timestamp and job_timestamp < since_timestamp:
+                        continue
+                    
+                    # Extract file identifier: everything before the last underscore (which is timestamp)
+                    # But we need to remove the detection type too
+                    # Format is: {audio_base}_{type}_{timestamp}
+                    # We want: {audio_base}_{timestamp}
+                    file_key_parts = parts[0].rsplit('_', 1)  # Split to get {audio_base} and {type}
+                    if len(file_key_parts) == 2:
+                        audio_base = file_key_parts[0]
+                        file_key = f"{audio_base}_{parts[1]}"  # {audio_base}_{timestamp}
+                    else:
+                        # Fallback: use the whole thing before timestamp
+                        file_key = parts[0]
+                    
+                    if file_key not in file_groups:
+                        file_groups[file_key] = []
+                    file_groups[file_key].append((job_key_str, status_str))
+                else:
+                    # If we can't parse, treat each job as a separate file (backward compatibility)
+                    file_key = job_key_str
+                    if file_key not in file_groups:
+                        file_groups[file_key] = []
+                    file_groups[file_key].append((job_key_str, status_str))
+            except (ValueError, IndexError):
+                # If we can't parse, treat each job as a separate file (backward compatibility)
+                file_key = job_key_str
+                if file_key not in file_groups:
+                    file_groups[file_key] = []
+                file_groups[file_key].append((job_key_str, status_str))
+        
+        # Count files by their status
+        # A file is "completed" only when ALL its detection jobs are completed
+        # A file is "queued" if ANY of its detection jobs are queued (and not all completed)
+        # A file is "in progress" if it has some jobs in progress but not all completed
+        
+        completed_files = 0
+        queued_files = 0
+        in_progress_files = 0
+        
+        for file_key, jobs in file_groups.items():
+            statuses = [status for _, status in jobs]
+            
+            # Check if all jobs are completed
+            all_completed = all(s == 'completed' for s in statuses)
+            if all_completed:
+                completed_files += 1
+            else:
+                # Check if any job is queued
+                has_queued = any(s == 'queued' for s in statuses)
+                if has_queued:
+                    queued_files += 1
+                else:
+                    # Has some jobs in progress or other status
+                    in_progress_files += 1
+        
+        total = len(file_groups)
         
         return jsonify({
             'total': total,
-            'completed': completed,
-            'queued': queued,
-            'inProgress': in_progress
+            'completed': completed_files,
+            'queued': queued_files,
+            'inProgress': in_progress_files
         })
     except redis.ConnectionError:
         # Redis not available, return empty status

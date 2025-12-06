@@ -7,12 +7,16 @@ from .worker import AudioDetectionJob, simulate_artifacts
 from .analysis_types import USER_JOB_TYPES, ANALYSIS_TYPES
 import multiprocessing
 from typing import List
+import soundfile as sf
+import sys
 
 
 # Get the project root directory (two levels up from this file)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 DEFAULT_AUDIO_DIR = os.path.join(PROJECT_ROOT, "audio_files")
+
+from audio_processing.utils import seconds_to_mmss
 
 # Config file to store audio directory preference (shared with API server)
 CONFIG_FILE = os.path.join(PROJECT_ROOT, '.audio_qa_config.json')
@@ -113,15 +117,15 @@ def main():
                 safe_input("Press Enter to continue...")
                 continue
 
-            clip_padding = safe_input("Enter clip padding in seconds [press Enter to use default (0.1s)]: ")
+            clip_padding = safe_input("Enter clip padding in seconds [press Enter to use default (1s)]: ")
             if clip_padding == "":
-                clip_padding = 0.1
+                clip_padding = 1
             else:
                 try:
                     clip_padding = float(clip_padding)
                 except ValueError:
-                    print("Invalid clip padding value; using default 0.1s.")
-                    clip_padding = 0.1
+                    print("Invalid clip padding value; using default 1s.")
+                    clip_padding = 1
 
             detection_params = {}
             for idx in det_indices:
@@ -146,7 +150,10 @@ def main():
             clear_screen()
             print(f"Available audio files ({loader.directory}):")
             for i, f in enumerate(files, 1):
-                print(f"  {i}. {f}")
+                with sf.SoundFile(os.path.join(loader.directory, f)) as sndf:
+                    duration = len(sndf) / sndf.samplerate
+                print(f"  {i}. {f} ({seconds_to_mmss(duration)})")
+
             raw_files = safe_input("Enter audio file numbers to process (comma-separated, e.g. '1,2' or 'all'): ")
             file_indices = parse_indices(raw_files, len(files))
             if not file_indices:

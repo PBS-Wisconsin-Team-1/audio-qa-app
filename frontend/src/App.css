@@ -43,6 +43,28 @@
   margin: 0;
 }
 
+.app-header-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.app-cli-button {
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.app-cli-button:hover {
+  background-color: #357abd;
+}
+
 .app-upload-toggle {
   background-color: #4a90e2;
   color: white;

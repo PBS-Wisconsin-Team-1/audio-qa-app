@@ -1,10 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { generateTextSummary, downloadTextFile } from '../utils/export';
 import './FileDetailView.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 const FileDetailView = ({ file, report }) => {
   // State for collapsed/expanded detection types
   const [expandedTypes, setExpandedTypes] = useState({});
+  // State for currently playing audio clip
+  const [playingClip, setPlayingClip] = useState(null);
+  const audioRefs = useRef({});
+
+  // Cleanup audio elements on unmount
+  useEffect(() => {
+    return () => {
+      // Stop all playing audio and cleanup
+      Object.values(audioRefs.current).forEach(audio => {
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+        }
+      });
+      audioRefs.current = {};
+    };
+  }, []);
 
   if (!file) {
     return (
@@ -18,8 +37,20 @@ const FileDetailView = ({ file, report }) => {
   const isNewFormat = report && typeof report === 'object' && !Array.isArray(report);
   const reportTitle = isNewFormat ? report.title : null;
   const reportFile = isNewFormat ? report.file : file.name;
-  const overallResults = isNewFormat ? (report.overall_results || []) : [];
+  const allOverallResults = isNewFormat ? (report.overall_results || []) : [];
   const detections = isNewFormat ? (report.in_file_detections || []) : (report || []);
+
+  // Extract metadata (samplerate, channels, duration) from overallResults
+  const metadataTypes = ['samplerate', 'channels', 'duration'];
+  const metadata = {};
+  const overallResults = allOverallResults.filter(result => {
+    const type = result.type.toLowerCase();
+    if (metadataTypes.includes(type)) {
+      metadata[type] = result.result;
+      return false; // Don't include in overallResults display
+    }
+    return true; // Keep in overallResults display
+  });
 
   // Group detections by type
   const detectionsByType = detections.reduce((acc, detection) => {
@@ -39,8 +70,70 @@ const FileDetailView = ({ file, report }) => {
     }));
   };
 
+  // Get clip URL for a detection
+  const getClipUrl = (detection) => {
+    if (!file || detection.id === undefined || detection.id === null) return null;
+    const clipFilename = `${detection.type.toLowerCase()}-${detection.id}.wav`;
+    return `${API_BASE_URL}/api/files/${file.id}/clips/${clipFilename}`;
+  };
+
+  // Handle play/pause for audio clip
+  const handlePlayClip = (detection, event) => {
+    event.stopPropagation(); // Prevent toggling the detection group
+    
+    const clipUrl = getClipUrl(detection);
+    if (!clipUrl) return;
+
+    const clipKey = `${detection.type}-${detection.id}`;
+    
+    // Stop any currently playing audio
+    if (playingClip && playingClip !== clipKey) {
+      const prevAudio = audioRefs.current[playingClip];
+      if (prevAudio) {
+        prevAudio.pause();
+        prevAudio.currentTime = 0;
+      }
+    }
+
+    // Get or create audio element
+    let audio = audioRefs.current[clipKey];
+    if (!audio) {
+      audio = new Audio(clipUrl);
+      audioRefs.current[clipKey] = audio;
+      
+      // Handle audio end
+      audio.addEventListener('ended', () => {
+        setPlayingClip(null);
+      });
+      
+      // Handle errors
+      audio.addEventListener('error', () => {
+        console.error('Error playing audio clip:', clipUrl);
+        setPlayingClip(null);
+      });
+    }
+
+    if (playingClip === clipKey && !audio.paused) {
+      // Pause if already playing
+      audio.pause();
+      setPlayingClip(null);
+    } else {
+      // Play the clip
+      audio.play().catch(err => {
+        console.error('Error playing audio:', err);
+        setPlayingClip(null);
+      });
+      setPlayingClip(clipKey);
+    }
+  };
+
+  // Check if clip exists for a detection
+  const hasClip = (detection) => {
+    return detection.id !== undefined && detection.id !== null;
+  };
+
   const handleExport = () => {
-    const summary = generateTextSummary(reportFile, reportTitle, overallResults, detections);
+    const summary = generateTextSummary(reportFile, reportTitle, overallResults, detections, metadata);
     const filename = `${reportFile.replace(/\.[^/.]+$/, '')}_report.txt`;
     downloadTextFile(summary, filename);
   };
@@ -68,8 +161,26 @@ const FileDetailView = ({ file, report }) => {
         <div>
           <h2 className="file-detail-title">{reportTitle || reportFile}</h2>
           <p className="file-detail-meta">
-            File: {reportFile} • Processed on {file.processedDate}
+            Processed on {file.processedDate}
+            {metadata.duration && (
+              <> • Duration: {metadata.duration}</>
+            )}
           </p>
+          {(metadata.samplerate || metadata.channels) && (
+            <p className="file-detail-meta-secondary">
+              {metadata.samplerate && (
+                <>Sample Rate: {typeof metadata.samplerate === 'number' ? metadata.samplerate.toFixed(0) : metadata.samplerate} Hz</>
+              )}
+              {metadata.samplerate && metadata.channels && ' • '}
+              {metadata.channels && (
+                <>Channels: {
+                  typeof metadata.channels === 'number' 
+                    ? (metadata.channels === 1 ? 'mono' : metadata.channels === 2 ? 'stereo' : `${metadata.channels} channels`)
+                    : metadata.channels
+                }</>
+              )}
+            </p>
+          )}
         </div>
         <button
           className="file-detail-export-btn"
@@ -276,16 +387,31 @@ const FileDetailView = ({ file, report }) => {
                           <div className="file-detail-detection-instances">
                             <strong>Detection Instances:</strong>
                             <ul className="file-detail-detection-instances-list">
-                              {typeDetections.map((detection, index) => (
-                                <li key={index} className="file-detail-detection-instance">
-                                  <span className="file-detail-detection-instance-time">
-                                    {detection.start_mmss}
-                                    {detection.end !== null && detection.end_mmss !== 'N/A' && (
-                                      <> - {detection.end_mmss}</>
+                              {typeDetections.map((detection, index) => {
+                                const clipKey = `${detection.type}-${detection.id}`;
+                                const isPlaying = playingClip === clipKey;
+                                const clipAvailable = hasClip(detection);
+                                
+                                return (
+                                  <li key={index} className="file-detail-detection-instance">
+                                    {clipAvailable && (
+                                      <button
+                                        className={`file-detail-play-btn ${isPlaying ? 'playing' : ''}`}
+                                        onClick={(e) => handlePlayClip(detection, e)}
+                                        title={isPlaying ? 'Pause audio' : 'Play audio clip'}
+                                      >
+                                        {isPlaying ? '⏸' : '▶'}
+                                      </button>
                                     )}
-                                  </span>
-                                </li>
-                              ))}
+                                    <span className="file-detail-detection-instance-time">
+                                      {detection.start_mmss}
+                                      {detection.end !== null && detection.end_mmss !== 'N/A' && (
+                                        <> - {detection.end_mmss}</>
+                                      )}
+                                    </span>
+                                  </li>
+                                );
+                              })}
                             </ul>
                           </div>
                         </div>

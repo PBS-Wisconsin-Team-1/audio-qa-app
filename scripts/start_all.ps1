@@ -5,6 +5,7 @@ param(
 
 $redisPath = "C:\Program Files\Redis\redis-server.exe"
 $jobQueueDir = "..\src\job_queue"
+$frontendDir = "..\frontend"
 $venvActivate = "..\.venv\Scripts\Activate.ps1"
 $pidDir = Join-Path $PSScriptRoot 'tmp'
 if (-not (Test-Path $pidDir)) { New-Item -ItemType Directory -Path $pidDir | Out-Null }
@@ -38,5 +39,5 @@ for ($i = 1; $i -le $workers; $i++) {
 
 # Start Client CLI in new PowerShell window using venv Python
 Start-Sleep -Seconds 1
-${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-CLIENT'; cd '$jobQueueDir'; auqa-cli" -WindowStyle Normal -PassThru
+${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-DASHBOARD'; cd '$frontendDir'; npm start" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p3.Id

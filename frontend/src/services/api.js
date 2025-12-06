@@ -33,11 +33,34 @@ export const getDetectionReport = async (fileId) => {
 };
 
 /**
- * Get queue status
+ * Open AUQA CLI in a new terminal window
  */
-export const getQueueStatus = async () => {
+export const openCli = async () => {
   try {
-    const response = await fetch(`${API_BASE_URL}/queue/status`);
+    const response = await fetch(`${API_BASE_URL}/open-cli`, {
+      method: 'POST'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to open CLI');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error opening CLI:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get queue status
+ * @param {number} sinceTimestamp - Optional Unix timestamp (seconds) to only count jobs created after this time
+ */
+export const getQueueStatus = async (sinceTimestamp = null) => {
+  try {
+    let url = `${API_BASE_URL}/queue/status`;
+    if (sinceTimestamp) {
+      url += `?since=${sinceTimestamp}`;
+    }
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error('Failed to fetch queue status');
     }
@@ -131,6 +154,107 @@ export const listAudioFiles = async () => {
     return await response.json();
   } catch (error) {
     console.error('Error listing audio files:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete one or more processed files
+ */
+export const deleteFiles = async (fileIds) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files/delete`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ file_ids: fileIds }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to delete files';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error deleting files:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get reports for multiple files (for bulk export)
+ */
+export const getBulkReports = async (fileIds) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files/export`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ file_ids: fileIds }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to fetch reports';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching bulk reports:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get available detection types and their default parameters
+ */
+export const getDetectionTypes = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/detection-types`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch detection types');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching detection types:', error);
+    throw error;
+  }
+};
+
+/**
+ * Queue audio files for processing with custom detection types and parameters
+ */
+export const queueJob = async (fileNames, detectionParams, clipPad = 0.1) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/queue/job`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        file_names: fileNames,
+        detection_params: detectionParams,
+        clip_pad: clipPad
+      }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to queue job';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error queueing job:', error);
     throw error;
   }
 };

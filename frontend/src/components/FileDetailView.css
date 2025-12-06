@@ -36,6 +36,13 @@
   margin: 0;
 }
 
+.file-detail-meta-secondary {
+  font-size: 12px;
+  color: #999;
+  margin: 4px 0 0 0;
+  font-style: italic;
+}
+
 .file-detail-export-btn {
   background-color: #4a90e2;
   color: white;
@@ -338,6 +345,9 @@
   background-color: #f8f9fa;
   border-radius: 4px;
   border-left: 3px solid #4a90e2;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .file-detail-detection-instance-time {
@@ -345,6 +355,38 @@
   font-weight: 600;
   color: #333;
   font-family: 'Courier New', monospace;
+}
+
+.file-detail-play-btn {
+  padding: 6px 12px;
+  border: 1px solid #4a90e2;
+  border-radius: 4px;
+  background-color: white;
+  color: #4a90e2;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.file-detail-play-btn:hover {
+  background-color: #4a90e2;
+  color: white;
+}
+
+.file-detail-play-btn.playing {
+  background-color: #4a90e2;
+  color: white;
+  border-color: #357abd;
+}
+
+.file-detail-play-btn:active {
+  transform: scale(0.95);
 }
 
 /* Legacy styles for backward compatibility */
