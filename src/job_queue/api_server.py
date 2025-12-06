@@ -171,23 +171,101 @@ def get_report(file_id):
 
 @app.route('/api/queue/status', methods=['GET'])
 def get_queue_status():
-    """Get current queue status from Redis."""
+    """Get current queue status from Redis.
+    
+    Optional query parameter:
+    - since: Unix timestamp - only count jobs created after this time
+    """
     try:
         redis_conn = redis.from_url(REDIS_URL)
+        
+        # Get optional 'since' timestamp parameter
+        since_timestamp = request.args.get('since', type=int)
         
         # Get all job statuses
         job_statuses = redis_conn.hgetall('job_status')
         
-        total = len(job_statuses)
-        completed = sum(1 for status in job_statuses.values() if status.decode('utf-8') == 'completed')
-        queued = sum(1 for status in job_statuses.values() if status.decode('utf-8') == 'queued')
-        in_progress = total - completed - queued
+        # Filter by timestamp if provided and group by file
+        # Job keys are in format: {audio_base}_{type}_{timestamp}
+        # We want to group by {audio_base}_{timestamp} to count files, not individual detection jobs
+        
+        file_groups = {}  # Key: {audio_base}_{timestamp}, Value: list of (job_key, status)
+        
+        for job_key, status in job_statuses.items():
+            job_key_str = job_key.decode('utf-8') if isinstance(job_key, bytes) else job_key
+            status_str = status.decode('utf-8') if isinstance(status, bytes) else status
+            
+            # Extract timestamp from the key
+            try:
+                # Split by underscore and get the last part (timestamp)
+                parts = job_key_str.rsplit('_', 1)
+                if len(parts) == 2:
+                    job_timestamp = int(parts[1])
+                    
+                    # Filter by timestamp if provided
+                    if since_timestamp and job_timestamp < since_timestamp:
+                        continue
+                    
+                    # Extract file identifier: everything before the last underscore (which is timestamp)
+                    # But we need to remove the detection type too
+                    # Format is: {audio_base}_{type}_{timestamp}
+                    # We want: {audio_base}_{timestamp}
+                    file_key_parts = parts[0].rsplit('_', 1)  # Split to get {audio_base} and {type}
+                    if len(file_key_parts) == 2:
+                        audio_base = file_key_parts[0]
+                        file_key = f"{audio_base}_{parts[1]}"  # {audio_base}_{timestamp}
+                    else:
+                        # Fallback: use the whole thing before timestamp
+                        file_key = parts[0]
+                    
+                    if file_key not in file_groups:
+                        file_groups[file_key] = []
+                    file_groups[file_key].append((job_key_str, status_str))
+                else:
+                    # If we can't parse, treat each job as a separate file (backward compatibility)
+                    file_key = job_key_str
+                    if file_key not in file_groups:
+                        file_groups[file_key] = []
+                    file_groups[file_key].append((job_key_str, status_str))
+            except (ValueError, IndexError):
+                # If we can't parse, treat each job as a separate file (backward compatibility)
+                file_key = job_key_str
+                if file_key not in file_groups:
+                    file_groups[file_key] = []
+                file_groups[file_key].append((job_key_str, status_str))
+        
+        # Count files by their status
+        # A file is "completed" only when ALL its detection jobs are completed
+        # A file is "queued" if ANY of its detection jobs are queued (and not all completed)
+        # A file is "in progress" if it has some jobs in progress but not all completed
+        
+        completed_files = 0
+        queued_files = 0
+        in_progress_files = 0
+        
+        for file_key, jobs in file_groups.items():
+            statuses = [status for _, status in jobs]
+            
+            # Check if all jobs are completed
+            all_completed = all(s == 'completed' for s in statuses)
+            if all_completed:
+                completed_files += 1
+            else:
+                # Check if any job is queued
+                has_queued = any(s == 'queued' for s in statuses)
+                if has_queued:
+                    queued_files += 1
+                else:
+                    # Has some jobs in progress or other status
+                    in_progress_files += 1
+        
+        total = len(file_groups)
         
         return jsonify({
             'total': total,
-            'completed': completed,
-            'queued': queued,
-            'inProgress': in_progress
+            'completed': completed_files,
+            'queued': queued_files,
+            'inProgress': in_progress_files
         })
     except redis.ConnectionError:
         # Redis not available, return empty status
