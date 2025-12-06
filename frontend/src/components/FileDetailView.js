@@ -1,10 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { generateTextSummary, downloadTextFile } from '../utils/export';
 import './FileDetailView.css';
+
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001';
 
 const FileDetailView = ({ file, report }) => {
   // State for collapsed/expanded detection types
   const [expandedTypes, setExpandedTypes] = useState({});
+  // State for currently playing audio clip
+  const [playingClip, setPlayingClip] = useState(null);
+  const audioRefs = useRef({});
+
+  // Cleanup audio elements on unmount
+  useEffect(() => {
+    return () => {
+      // Stop all playing audio and cleanup
+      Object.values(audioRefs.current).forEach(audio => {
+        if (audio) {
+          audio.pause();
+          audio.src = '';
+        }
+      });
+      audioRefs.current = {};
+    };
+  }, []);
 
   if (!file) {
     return (
@@ -37,6 +56,68 @@ const FileDetailView = ({ file, report }) => {
       ...prev,
       [type]: !prev[type]
     }));
+  };
+
+  // Get clip URL for a detection
+  const getClipUrl = (detection) => {
+    if (!file || detection.id === undefined || detection.id === null) return null;
+    const clipFilename = `${detection.type.toLowerCase()}-${detection.id}.wav`;
+    return `${API_BASE_URL}/api/files/${file.id}/clips/${clipFilename}`;
+  };
+
+  // Handle play/pause for audio clip
+  const handlePlayClip = (detection, event) => {
+    event.stopPropagation(); // Prevent toggling the detection group
+    
+    const clipUrl = getClipUrl(detection);
+    if (!clipUrl) return;
+
+    const clipKey = `${detection.type}-${detection.id}`;
+    
+    // Stop any currently playing audio
+    if (playingClip && playingClip !== clipKey) {
+      const prevAudio = audioRefs.current[playingClip];
+      if (prevAudio) {
+        prevAudio.pause();
+        prevAudio.currentTime = 0;
+      }
+    }
+
+    // Get or create audio element
+    let audio = audioRefs.current[clipKey];
+    if (!audio) {
+      audio = new Audio(clipUrl);
+      audioRefs.current[clipKey] = audio;
+      
+      // Handle audio end
+      audio.addEventListener('ended', () => {
+        setPlayingClip(null);
+      });
+      
+      // Handle errors
+      audio.addEventListener('error', () => {
+        console.error('Error playing audio clip:', clipUrl);
+        setPlayingClip(null);
+      });
+    }
+
+    if (playingClip === clipKey && !audio.paused) {
+      // Pause if already playing
+      audio.pause();
+      setPlayingClip(null);
+    } else {
+      // Play the clip
+      audio.play().catch(err => {
+        console.error('Error playing audio:', err);
+        setPlayingClip(null);
+      });
+      setPlayingClip(clipKey);
+    }
+  };
+
+  // Check if clip exists for a detection
+  const hasClip = (detection) => {
+    return detection.id !== undefined && detection.id !== null;
   };
 
   const handleExport = () => {
@@ -276,16 +357,31 @@ const FileDetailView = ({ file, report }) => {
                           <div className="file-detail-detection-instances">
                             <strong>Detection Instances:</strong>
                             <ul className="file-detail-detection-instances-list">
-                              {typeDetections.map((detection, index) => (
-                                <li key={index} className="file-detail-detection-instance">
-                                  <span className="file-detail-detection-instance-time">
-                                    {detection.start_mmss}
-                                    {detection.end !== null && detection.end_mmss !== 'N/A' && (
-                                      <> - {detection.end_mmss}</>
+                              {typeDetections.map((detection, index) => {
+                                const clipKey = `${detection.type}-${detection.id}`;
+                                const isPlaying = playingClip === clipKey;
+                                const clipAvailable = hasClip(detection);
+                                
+                                return (
+                                  <li key={index} className="file-detail-detection-instance">
+                                    <span className="file-detail-detection-instance-time">
+                                      {detection.start_mmss}
+                                      {detection.end !== null && detection.end_mmss !== 'N/A' && (
+                                        <> - {detection.end_mmss}</>
+                                      )}
+                                    </span>
+                                    {clipAvailable && (
+                                      <button
+                                        className={`file-detail-play-btn ${isPlaying ? 'playing' : ''}`}
+                                        onClick={(e) => handlePlayClip(detection, e)}
+                                        title={isPlaying ? 'Pause audio' : 'Play audio clip'}
+                                      >
+                                        {isPlaying ? '⏸' : '▶'}
+                                      </button>
                                     )}
-                                  </span>
-                                </li>
-                              ))}
+                                  </li>
+                                );
+                              })}
                             </ul>
                           </div>
                         </div>

@@ -169,6 +169,31 @@ def get_report(file_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/files/<file_id>/clips/<clip_filename>', methods=['GET'])
+def get_clip(file_id, clip_filename):
+    """Serve audio clip file for a specific detection."""
+    try:
+        # Find the clips directory
+        file_dir = os.path.join(DETECTION_RESULTS_DIR, file_id)
+        clips_dir = os.path.join(file_dir, 'clips')
+        
+        if not os.path.exists(clips_dir):
+            return jsonify({'error': 'Clips directory not found'}), 404
+        
+        clip_path = os.path.join(clips_dir, clip_filename)
+        
+        # Security check: ensure the clip is within the clips directory
+        if not os.path.abspath(clip_path).startswith(os.path.abspath(clips_dir)):
+            return jsonify({'error': 'Invalid clip path'}), 400
+        
+        if not os.path.exists(clip_path):
+            return jsonify({'error': 'Clip not found'}), 404
+        
+        # Serve the audio file
+        return send_from_directory(clips_dir, clip_filename)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/queue/status', methods=['GET'])
 def get_queue_status():
     """Get current queue status from Redis.
