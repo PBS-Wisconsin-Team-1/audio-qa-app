@@ -394,12 +394,6 @@ const FileDetailView = ({ file, report }) => {
                                 
                                 return (
                                   <li key={index} className="file-detail-detection-instance">
-                                    <span className="file-detail-detection-instance-time">
-                                      {detection.start_mmss}
-                                      {detection.end !== null && detection.end_mmss !== 'N/A' && (
-                                        <> - {detection.end_mmss}</>
-                                      )}
-                                    </span>
                                     {clipAvailable && (
                                       <button
                                         className={`file-detail-play-btn ${isPlaying ? 'playing' : ''}`}
@@ -409,6 +403,12 @@ const FileDetailView = ({ file, report }) => {
                                         {isPlaying ? '⏸' : '▶'}
                                       </button>
                                     )}
+                                    <span className="file-detail-detection-instance-time">
+                                      {detection.start_mmss}
+                                      {detection.end !== null && detection.end_mmss !== 'N/A' && (
+                                        <> - {detection.end_mmss}</>
+                                      )}
+                                    </span>
                                   </li>
                                 );
                               })}
