@@ -34,10 +34,15 @@ export const getDetectionReport = async (fileId) => {
 
 /**
  * Get queue status
+ * @param {number} sinceTimestamp - Optional Unix timestamp (seconds) to only count jobs created after this time
  */
-export const getQueueStatus = async () => {
+export const getQueueStatus = async (sinceTimestamp = null) => {
   try {
-    const response = await fetch(`${API_BASE_URL}/queue/status`);
+    let url = `${API_BASE_URL}/queue/status`;
+    if (sinceTimestamp) {
+      url += `?since=${sinceTimestamp}`;
+    }
+    const response = await fetch(url);
     if (!response.ok) {
       throw new Error('Failed to fetch queue status');
     }
