@@ -33,6 +33,24 @@ export const getDetectionReport = async (fileId) => {
 };
 
 /**
+ * Open AUQA CLI in a new terminal window
+ */
+export const openCli = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/open-cli`, {
+      method: 'POST'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to open CLI');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error opening CLI:', error);
+    throw error;
+  }
+};
+
+/**
  * Get queue status
  * @param {number} sinceTimestamp - Optional Unix timestamp (seconds) to only count jobs created after this time
  */

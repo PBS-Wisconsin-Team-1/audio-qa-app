@@ -4,7 +4,7 @@ import QueueProgressBar from './components/QueueProgressBar';
 import FileUpload from './components/FileUpload';
 import FileDetailView from './components/FileDetailView';
 import AudioDirSelector from './components/AudioDirSelector';
-import { getProcessedFiles, getDetectionReport } from './services/api';
+import { getProcessedFiles, getDetectionReport, openCli } from './services/api';
 import './App.css';
 
 function App() {
@@ -67,6 +67,16 @@ function App() {
     setShowUpload(false);
   };
 
+  const handleOpenCli = async () => {
+    try {
+      await openCli();
+      alert('AUQA CLI opened in a new terminal window on the server.');
+    } catch (err) {
+      alert('Failed to open CLI. Make sure the API server is running.');
+      console.error(err);
+    }
+  };
+
   if (loading) {
     return (
       <div className="app-loading">
@@ -86,12 +96,21 @@ function App() {
           </h1>
           <h2>Audio Quality Assurance Application</h2>
         </div>
-        <button
-          className="app-upload-toggle"
-          onClick={() => setShowUpload(!showUpload)}
-        >
-          {showUpload ? 'Hide Upload' : 'Upload File'}
-        </button>
+        <div className="app-header-buttons">
+          <button
+            className="app-cli-button"
+            onClick={handleOpenCli}
+            title="Open AUQA CLI in terminal"
+          >
+            Open CLI
+          </button>
+          <button
+            className="app-upload-toggle"
+            onClick={() => setShowUpload(!showUpload)}
+          >
+            {showUpload ? 'Hide Upload' : 'Upload File'}
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
