@@ -145,22 +145,25 @@ def open_cli():
         system = platform.system()
         
         if system == 'Windows':
-            # Open PowerShell with CLI
+            # Open PowerShell with CLI (window closes when CLI exits)
             subprocess.Popen(
-                ['powershell.exe', '-NoExit', '-Command', 
-                 f'cd "{SCRIPT_DIR}"; auqa-cli'],
+                ['powershell.exe', '-Command', 'auqa-cli'],
                 creationflags=subprocess.CREATE_NEW_CONSOLE
             )
         elif system == 'Darwin':  # macOS
             subprocess.Popen(
-                ['open', '-a', 'Terminal', cli_script]
+                ['open', '-a', 'Terminal.app', '-n', '-e', 'auqa-cli']
             )
         else:  # Linux
             # Try common terminal emulators
-            terminals = ['gnome-terminal', 'xterm', 'konsole']
-            for term in terminals:
+            terminals = [
+                ['gnome-terminal', '--', 'auqa-cli'],
+                ['xterm', '-e', 'auqa-cli'],
+                ['konsole', '-e', 'auqa-cli']
+            ]
+            for term_cmd in terminals:
                 try:
-                    subprocess.Popen([term, '--', 'python', cli_script])
+                    subprocess.Popen(term_cmd)
                     break
                 except FileNotFoundError:
                     continue
