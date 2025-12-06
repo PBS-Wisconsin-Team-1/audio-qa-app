@@ -3,6 +3,7 @@ import Gallery from './components/Gallery';
 import QueueProgressBar from './components/QueueProgressBar';
 import FileUpload from './components/FileUpload';
 import FileDetailView from './components/FileDetailView';
+import AudioDirSelector from './components/AudioDirSelector';
 import { getProcessedFiles, getDetectionReport } from './services/api';
 import './App.css';
 
@@ -73,7 +74,13 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Audio Quality Assurance</h1>
+        <div className="app-header-titles">
+          <h1>
+            <img src="/icons/favicon.svg" alt="AuQA Logo" className="app-logo" />
+            <strong>AuQA</strong>
+          </h1>
+          <h2>Audio Quality Assurance Application</h2>
+        </div>
         <button
           className="app-upload-toggle"
           onClick={() => setShowUpload(!showUpload)}
@@ -84,6 +91,7 @@ function App() {
 
       <main className="app-main">
         <div className="app-sidebar">
+          <AudioDirSelector onDirChange={loadFiles} />
           <QueueProgressBar />
           {showUpload && (
             <FileUpload onUploadSuccess={handleUploadSuccess} />
@@ -105,7 +113,7 @@ function App() {
               />
               <FileDetailView
                 file={selectedFile}
-                detections={detections}
+                report={detections}
               />
             </>
           )}

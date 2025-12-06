@@ -1,6 +1,7 @@
 import numpy as np
 import librosa
 from scipy.fftpack import fft
+from clipdetect import detect_clipping as clipdat
 
 def thd_ratio(data : np.array):
     n = len(data)
@@ -17,7 +18,8 @@ def index_to_time(index: int, sr: int) -> float:
         raise ValueError("Index must be non-negative")
     return index / float(sr)
 
-def detect_clipping(audio, sr, threshold=0.98):
+# return list of (start_s, end_s) tuples for clipping regions where both are in seconds [ran by job queue]
+def detect_clipping(audio, sr) -> list[tuple[float, float]]:
     """
     Detects clipping in an audio file.
 
@@ -31,26 +33,14 @@ def detect_clipping(audio, sr, threshold=0.98):
     """
 
     # Normalize audio
-    audio = audio / np.max(np.abs(audio))
+    detections, _ = clipdat(audio)
 
-    # Detect clipping
-    clipped = np.abs(audio) > threshold
-    clip_ratio = np.sum(clipped) / len(audio)
+    ditorted_regions = [(detection['start'] / sr, detection['end'] / sr) for detection in detections]
 
-    # Clipped sample times 
-    clipped_frames = np.where(clipped)[0]
-    clipped_times = clipped_frames / sr
+    return ditorted_regions
 
-    # Spectral analysis (centroid) 
-    spectral_centroid = librosa.feature.spectral_centroid(y=audio, sr=sr)[0]
-    frames = range(len(spectral_centroid))
-    t = librosa.frames_to_time(frames, sr=sr)
-    threshold = np.mean(spectral_centroid) + 2 * np.std(spectral_centroid)
-    distorted_regions = t[spectral_centroid > threshold]
-
-    return distorted_regions
-
-def detect_cutout(audio, sr, threshold=0.001, min_len=50):
+# return list of (start_s, end_s) tuples for cutout regions where both are in seconds [ran by job queue]
+def detect_cutout(audio, sr, threshold=0.001, min_len=50) -> list[tuple[float, float]]:
     frame_length = int((min_len * sr) / 1000)
     hop_length = frame_length // 2
     rms = librosa.feature.rms(y=audio, frame_length=frame_length, hop_length=hop_length)[0]

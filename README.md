@@ -1,5 +1,6 @@
-
 # Audio QA App (Quick Start)
+
+![AuQA Screenshot](assets/AuQA_screenshot.png)
 
 ## Install Dependencies
 
@@ -54,60 +55,47 @@ To stop all services:
 bash stop_all.sh
 ```
 
-## Dashboard & Monitoring
-
-
-
-You can also run the interactive console app:
-```bash
-cd src/console_app
-python main.py
-```
-
-## Frontend (React Web App)
-
-The React frontend provides a web interface for viewing detection results and managing audio files.
-
-### Setup
-
-1. Install Node.js dependencies:
+**Start AuQA Dashboard UI**
 ```bash
 cd frontend
 npm install
-```
-
-2. Start the Flask API server (in a separate terminal):
-```bash
-# Option 1: From project root
-python src/api_server.py
-
-# Option 2: Use helper script (from project root)
-./scripts/start_api.sh
-# On Windows:
-# .\scripts\start_api.ps1
-```
-
-3. Start the React development server:
-```bash
-cd frontend
 npm start
 ```
 
-The frontend will be available at [http://localhost:3000](http://localhost:3000)
+## Docker Setup
 
-**Note:** The API server runs on port 5001 by default (instead of 5000) to avoid conflicts with macOS AirPlay Receiver. If you need to use a different port, set the `API_PORT` environment variable or update the frontend's `.env` file.
+This project supports full containerization using Docker and Docker Compose. All services (API, worker, CLI, dashboard, frontend, Redis) are defined in `docker-compose.yml` for easy, consistent deployment across devices.
 
-### Features
+### Quick Start
 
-- **Gallery View**: Browse all processed audio files with issue counts
-- **Queue Progress**: Real-time monitoring of job queue status
-- **File Upload**: Upload audio files for processing (optional)
-- **Issue Detection**: View detailed detection results including:
-  - Issue type (Clipping, Cutout, etc.)
-  - Timing information (start/end times)
-  - Detection parameters
-  - Detailed descriptions
-- **Export Reports**: Download text file summaries of all detected issues
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/PBS-Wisconsin-Team-1/audio-qa-app.git
+   cd audio-qa-app
+   ```
+2. **Build and start all services:**
+   ```bash
+   docker-compose up --build
+   ```
+   This will build the backend image and start all containers. The first build may take several minutes.
+
+   You can optionally set an `AUDIO_FILES_PATH` environment variable before running docker compose to change the audio folder to select audio files from.
+
+   ```bash
+	$env:AUDIO_FILES_PATH = "C:\path\to\your\audio_files"
+   ```
+   *Note: When running with docker, cannot change the audio file path. You must restart the app and change to the new directory using the environment variable.*   
+
+3. **Access the app:**
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - API: [http://localhost:5001/api](http://localhost:5001/api)
+   - RQ Dashboard: [http://localhost:9181](http://localhost:9181) (optional)
+
+4. **Stop all services:**
+   ```bash
+   docker-compose down
+   ```
+Refer to DOCKER.md for more building options
 
 ---
 For more details, see the [GitHub repository](https://github.com/PBS-Wisconsin-Team-1/audio-qa-app).

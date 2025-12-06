@@ -2,11 +2,26 @@
   padding: 20px;
 }
 
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .gallery-title {
   font-size: 24px;
   font-weight: 600;
-  margin-bottom: 20px;
+  margin: 0;
   color: #333;
+}
+
+.gallery-page-info {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
 }
 
 .gallery-grid {
@@ -81,5 +96,84 @@
 .gallery-empty-hint {
   font-size: 14px;
   color: #999;
+}
+
+/* Pagination */
+.gallery-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+}
+
+.gallery-pagination-btn {
+  padding: 8px 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gallery-pagination-btn:hover:not(:disabled) {
+  background-color: #f8f9fa;
+  border-color: #4a90e2;
+  color: #4a90e2;
+}
+
+.gallery-pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gallery-pagination-pages {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.gallery-pagination-page {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: white;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gallery-pagination-page:hover {
+  background-color: #f8f9fa;
+  border-color: #4a90e2;
+  color: #4a90e2;
+}
+
+.gallery-pagination-page.active {
+  background-color: #4a90e2;
+  border-color: #4a90e2;
+  color: white;
+  cursor: default;
+}
+
+.gallery-pagination-page.active:hover {
+  background-color: #357abd;
+  border-color: #357abd;
+}
+
+.gallery-pagination-ellipsis {
+  padding: 0 8px;
+  color: #999;
+  font-size: 14px;
 }
 

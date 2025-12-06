@@ -61,13 +61,76 @@ export const uploadAudioFile = async (file) => {
       body: formData,
     });
     
+    const data = await response.json();
+    
     if (!response.ok) {
-      throw new Error('Failed to upload file');
+      // Use server error message if available
+      const errorMessage = data.error || data.message || 'Failed to upload file';
+      throw new Error(errorMessage);
     }
     
-    return await response.json();
+    return data;
   } catch (error) {
     console.error('Error uploading file:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get current audio directory configuration
+ */
+export const getAudioDir = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/config/audio-dir`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch audio directory');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching audio directory:', error);
+    throw error;
+  }
+};
+
+/**
+ * Set audio directory configuration
+ */
+export const setAudioDir = async (audioDir) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/config/audio-dir`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ audio_dir: audioDir }),
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      const errorMessage = data.error || 'Failed to set audio directory';
+      throw new Error(errorMessage);
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error setting audio directory:', error);
+    throw error;
+  }
+};
+
+/**
+ * List audio files in the configured directory
+ */
+export const listAudioFiles = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/files/list`);
+    if (!response.ok) {
+      throw new Error('Failed to list audio files');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error listing audio files:', error);
     throw error;
   }
 };

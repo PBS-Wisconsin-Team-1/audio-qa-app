@@ -10,11 +10,14 @@ def seconds_to_mmss(seconds : float):
     return f"{minutes:02d}:{secs:05.2f}"
 
 class Detection:
-    def __init__(self, start : float, end: float, type: str, params: dict):
+    def __init__(self, type: str, params: dict, id: int = 0, result=None, start: float=None, end: float=None, in_file: bool=True):
         self.start = start
         self.end = end
         self.type = type
         self.params = params
+        self.result = result
+        self.in_file = in_file
+        self.id = id
 
     def get_details(self) -> str:
         match self.type:
@@ -22,9 +25,16 @@ class Detection:
                 return f'Less than {self.params["threshold"]} RMS detected for at least {self.params["min_len"]} ms'
 
             case "Clipping":
-                return f'Greater than {self.params["threshold"]} amplitude detected'
+                return f"Clipping detected by ClipDaT algorithm"
+            
+            case "Loudness":
+                return f'Loudness exceeded {self.params["threshold"]} LUFS'
 
     def __lt__(self, other: "Detection") -> bool:
+        if not self.in_file and not other.in_file:
+            return self.type < other.type
+        if not self.in_file or not other.in_file:
+            return not self.in_file
         return self.start < other.start
 
     def __str__(self) -> str:
@@ -33,19 +43,25 @@ class Detection:
     def to_json(self) -> str:
         return json.dumps({
             'type': self.type,
+            'id': self.id,
+            'params': self.params,
             'start': self.start,
             'end': self.end,
-            'params': self.params
+            'result': self.result,
+            'in_file': self.in_file
         })
     
     @staticmethod
     def det_from_string(s: str) -> "Detection":
         d = json.loads(s)
+        type = str(d['type'])
+        id = int(d['id']) if 'id' in d else None
+        params = d['params'] if d['params'] is not None else {}
         start = float(d['start']) if d['start'] is not None else None
         end = float(d['end']) if d['end'] is not None else None
-        type = str(d['type'])
-        params = d['params'] if d['params'] is not None else {}
-        return Detection(start=start, end=end, type=type, params=params)
+        result = d['result'] if 'result' in d else None
+        in_file = bool(d['in_file']) if 'in_file' in d else None
+        return Detection(id=id, start=start, end=end, result=result, type=type, params=params, in_file=in_file)
 
 def fill_default_params(func, params):
     sig = inspect.signature(func)

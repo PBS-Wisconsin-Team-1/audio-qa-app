@@ -3,6 +3,9 @@
 venv/
 audioenv/
 
+# Configuration files
+.audio_qa_config.json
+
 # Python
 __pycache__/
 *.py[cod]
@@ -128,7 +131,6 @@ audio_files/*
 # Track the detection_results folder but ignore its contents
 detection_results/*
 !detection_results/example_YYYY-MM-DD_HH-MM-SS/
-!detection_results/example_YYYY-MM-DD_HH-MM-SS/ex1_distorted_report.json
 
 # Node.js (if using any JavaScript/Node components)
 node_modules/

@@ -12,7 +12,7 @@ import librosa.display
 import matplotlib.pyplot as plt
 import argparse
 
-def detect_clipping(audio, sr, clip_threshold=0.98, plot=True):
+def detect_clipping(audio, sr, clip_threshold=0.98, plot=False):
     """
     Detects clipping in an audio file.
 
@@ -56,7 +56,6 @@ def detect_clipping(audio, sr, clip_threshold=0.98, plot=True):
 
     # Summary 
     summary = {
-        "filename": filename,
         "sampling_rate": sr,
         "duration_sec": librosa.get_duration(y=audio, sr=sr),
         "total_clipped_samples": np.sum(clipped),
@@ -65,14 +64,13 @@ def detect_clipping(audio, sr, clip_threshold=0.98, plot=True):
     }
 
     print("=== Distortion Summary ===")
-    print(f"File: {summary['filename']}")
     print(f"Sampling Rate: {summary['sampling_rate']} Hz")
     print(f"Duration: {summary['duration_sec']:.2f} seconds")
     print(f"Total Clipped Samples: {summary['total_clipped_samples']}")
     print(f"Clipping Detected in {summary['clip_ratio']*100:.4f}% of samples")
     print(f"Distorted Regions (first 10): {summary['distorted_regions_sec']} seconds")
 
-    return summary
+    return distorted_regions
 
 
 if __name__ == "__main__":
@@ -82,4 +80,4 @@ if __name__ == "__main__":
     parser.add_argument("--no_plot", action="store_true", help="Do not display waveform plot")
     args = parser.parse_args()
 
-    detect_distortion(args.audio_file, clip_threshold=args.clip_threshold, plot=not args.no_plot)
+    detect_clipping(args.audio_file, clip_threshold=args.clip_threshold, plot=not args.no_plot)
