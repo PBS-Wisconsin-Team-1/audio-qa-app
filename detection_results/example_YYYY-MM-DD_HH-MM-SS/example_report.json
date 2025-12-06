@@ -18,9 +18,9 @@
       "result": "mono"
     },
     {
-      "type": "Overall LUFS",
+      "type": "duration",
       "params": {},
-      "result": -28.40189584017971
+      "result": "00:07.34"
     }
   ],
   "in_file_detections": [
