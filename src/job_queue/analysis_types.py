@@ -15,45 +15,22 @@ ANALYSIS_TYPES = {
     },
     "Cutout": {
         "type": "in-file",
-        "params": {"threshold": 0.0001, "min_len": 100},
+        "params": {"silence_threshold": 0.0001, "minimum_length": 100},
         "func": detect_cutout
     },
     "Loudness": {
         "type": "in-file",
-        "params": {"loudness_threshold": -10.0, "window_s": 0.4},
+        "params": {"loudness_threshold": -10.0, "window_size": 0.4},
         "func": get_loudness_spikes
     },
     "Speech Quality": {
         "type": "in-file",
-        "params": {"mos_threshold": 2.0, "window_s": 1.0},
+        "params": {"mos_threshold": 2.0, "window_size": 1.0},
         "func": detect_low_mos_regions
     },
     "Overall LUFS": {
         "type": "overall",
         "params": {},
         "func": get_lufs
-    },
-    "Low MOS": {
-    "type": "in-file",
-    "display_name": "Low Audio Quality",
-    "description": "Identifies portions of the audio that fall below an acceptable quality level.",
-    "params": {
-        "mos_threshold": {
-            "default": 2.5,
-            "label": "Quality Level",
-            "help": "The minimum acceptable quality score before a section is flagged."
-        },
-        "window_s": {
-            "default": 1.0,
-            "label": "Evaluation Duration",
-            "help": "How long the system listens during each quality assessment."
-        },
-        "hop_s": {
-            "default": 0.5,
-            "label": "Evaluation Interval",
-            "help": "How frequently the system performs a new assessment as it moves through the audio."
-        },
-    },
-    "func": detect_low_mos_regions,
     }
 }

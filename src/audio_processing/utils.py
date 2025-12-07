@@ -22,13 +22,16 @@ class Detection:
     def get_details(self) -> str:
         match self.type:
             case "Cutout":
-                return f'Less than {self.params["threshold"]} RMS detected for at least {self.params["min_len"]} ms'
+                return f'Regions with long periods of silence below the given threshold'
 
             case "Clipping":
                 return f"Clipping detected by ClipDaT algorithm"
             
             case "Loudness":
-                return f'Loudness exceeded {self.params["threshold"]} LUFS'
+                return f'Regions where loudness exceeded the given LUFS threshold'
+
+            case "Speech Quality":
+                return f'Regions where MOS speech quality score was below the given threshold'
 
     def __lt__(self, other: "Detection") -> bool:
         if not self.in_file and not other.in_file:

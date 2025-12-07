@@ -28,14 +28,24 @@
       "type": "Cutout",
       "id": 0,
       "start": 0.0,
-      "end": 0.425,
+      "end": 0.1,
       "params": {
-        "threshold": 0.001,
-        "min_len": 50
+        "silence_threshold": 0.0001,
+        "minimum_length": 100
       },
       "start_mmss": "00:00.00",
-      "end_mmss": "00:00.42",
-      "details": "Less than 0.001 RMS detected for at least 50 ms"
+      "end_mmss": "00:00.10",
+      "details": "Regions with long periods of silence below the given threshold"
+    },
+    {
+      "type": "Clipping",
+      "id": 0,
+      "start": 91.612,
+      "end": 91.612,
+      "params": {},
+      "start_mmss": "01:31.61",
+      "end_mmss": "01:31.61",
+      "details": "Clipping detected by ClipDaT algorithm"
     },
     {
       "type": "Loudness",
@@ -51,14 +61,17 @@
       "details": "Loudness exceeded -23.0 LUFS"
     },
     {
-      "type": "Clipping",
+      "type": "Speech Quality",
       "id": 0,
-      "start": 1.053,
-      "end": 1.053,
-      "params": {},
-      "start_mmss": "00:01.05",
-      "end_mmss": "00:01.05",
-      "details": "Clipping detected by ClipDaT algorithm"
+      "start": 442.5,
+      "end": 443.5,
+      "params": {
+        "mos_threshold": 2.0,
+        "window_size": 1.0
+      },
+      "start_mmss": "07:22.50",
+      "end_mmss": "07:23.50",
+      "details": "Regions where MOS speech quality score was below the given threshold"
     }
   ]
 }

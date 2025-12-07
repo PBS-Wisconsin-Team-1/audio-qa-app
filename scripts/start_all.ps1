@@ -17,8 +17,6 @@ if (Test-Path $pidFile) { Remove-Item $pidFile }
 ${p1} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-REDIS'; & redis-server" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p1.Id
 
-
-
 # Optionally start RQ Dashboard
 if ($dashboard) {
     ${p2} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-DASHBOARD'; python -m rq_dashboard" -WindowStyle Normal -PassThru
@@ -29,6 +27,9 @@ if ($dashboard) {
 ${p_api} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-API'; cd '$jobQueueDir'; auqa-api" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p_api.Id
 
+# Start Client CLI in new PowerShell window using venv Python
+Start-Sleep -Seconds 1
+
 # Start RQ Workers in new PowerShell windows sourcing venv
 for ($i = 1; $i -le $workers; $i++) {
     $title = "AUQA-WORKER-$i"
@@ -37,7 +38,5 @@ for ($i = 1; $i -le $workers; $i++) {
     Add-Content $pidFile $pw.Id
 }
 
-# Start Client CLI in new PowerShell window using venv Python
-Start-Sleep -Seconds 1
 ${p3} = Start-Process powershell.exe -ArgumentList "-NoExit", "-Command", "[console]::Title = 'AUQA-DASHBOARD'; cd '$frontendDir'; npm start" -WindowStyle Normal -PassThru
 Add-Content $pidFile $p3.Id

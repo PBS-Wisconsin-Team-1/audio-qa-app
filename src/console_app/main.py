@@ -54,8 +54,8 @@ def detect(args, verbose=False):
 	# Cutout detection
 	cutouts = dd.detect_cutout(
 		y, sr,
-		threshold=getattr(args, 'cut_thresh', 0.001),
-		min_len=getattr(args, 'min_silence_ms', 50)
+		silence_threshold=getattr(args, 'cut_thresh', 0.001),
+		minimum_length=getattr(args, 'min_silence_ms', 50)
 	)
 
 	# Distortion detection (full path)

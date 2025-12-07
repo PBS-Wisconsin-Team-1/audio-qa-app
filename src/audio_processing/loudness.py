@@ -41,7 +41,7 @@ def compute_short_term_loudness(
 def get_loudness_spikes(
     audio: np.ndarray,
     sr: int,
-    window_s: float = 0.4,
+    window_size: float = 0.4,
     threshold: float = -16.0
 ) -> List[Tuple[float, float, float]]:
     """
@@ -60,9 +60,9 @@ def get_loudness_spikes(
     """
     merge = True
 
-    hop_s = window_s / 2.0  # 50% overlap
+    hop_s = window_size / 2.0  # 50% overlap
     meter = pyln.Meter(sr)
-    win_len = int(window_s * sr)
+    win_len = int(window_size * sr)
     hop_len = int(hop_s * sr)
 
     if win_len <= 0 or hop_len <= 0:

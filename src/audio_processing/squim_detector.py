@@ -29,29 +29,26 @@ def _compute_simple_mos(wav: torch.Tensor, sr: int) -> float:
     return float(mos)
 
 # Create squim MOS model
-def get_squim_model(device=None):
-    if device is None:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def get_squim_model():
 
     class SimpleMOSModel(torch.nn.Module):
         def forward(self, wav: torch.Tensor, sr: int) -> torch.Tensor:
             mos = _compute_simple_mos(wav.cpu(), sr)
             return torch.tensor(mos, dtype=torch.float32)
-    model = SimpleMOSModel().to(device)
+    model = SimpleMOSModel().to('cpu')
     model.eval()
 
-    return model, device
+    return model
 
 def sliding_mos(
     audio: np.ndarray,
     sr: int,
     window_s: float = 1.0,
-    device=None,
 ):
     hop_s = window_s / 2
     wav = torch.from_numpy(audio).unsqueeze(0)  # Shape: (1, samples)
-    model, device = get_squim_model(device)
-    wav = wav.to(device)
+    model = get_squim_model()
+    wav = wav.to('cpu')
 
     win = int(window_s * sr)
     hop = int(hop_s * sr)
@@ -72,16 +69,12 @@ def detect_low_mos_regions(
     audio: np.ndarray,
     sr: int,
     mos_threshold: float = 2.0,
-    window_s: float = 1.0,
-    device=None,
+    window_size: float = 1.0,
 ):
-    simple=True
     scores = sliding_mos(
         audio=audio,
         sr=sr,
-        window_s=window_s,
-        device=device,
-        simple=simple,
+        window_s=window_size,
     )
     detections = []
     for start_t, end_t, mos_val in scores:
