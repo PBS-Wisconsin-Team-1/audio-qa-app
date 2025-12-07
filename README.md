@@ -98,8 +98,8 @@ cd scripts
 
 ![AuQA dashboard example](assets/AuQA-screenshot.png)
 
-1. Open the AuQA frontend (`http://localhost:3000`) and use the **Upload File** button to upload an audio file (or place audio files in the configured `audio_files/` directory).
-2. The backend processes files using a Redis-backed job queue. Processed reports appear in the gallery.
+1. Open the AuQA frontend (`http://localhost:3000`) and use the **Upload File** button to upload audio file(s) (or place audio files in the configured directory).
+2. The backend processes files using a Redis-backed job queue, which will be displayed in the frontend. Processed reports appear in the gallery.
 3. Click a file in the gallery to view detections, play saved clips, and inspect metadata.
 4. Use the **Open CLI** button in the header to launch the `auqa-cli` client on the same machine as the API server (useful for advanced queue/worker interactions).
 
