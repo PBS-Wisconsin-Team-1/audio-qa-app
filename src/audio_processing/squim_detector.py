@@ -1,5 +1,4 @@
 import torch
-import torchaudio
 import numpy as np
 from .utils import Detection
 import math
