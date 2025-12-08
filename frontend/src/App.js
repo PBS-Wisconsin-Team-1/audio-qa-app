@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Gallery from './components/Gallery';
 import QueueProgressBar from './components/QueueProgressBar';
 import ProcessFiles from './components/ProcessFiles';
 import FileDetailView from './components/FileDetailView';
 import AudioDirSelector from './components/AudioDirSelector';
-import { getProcessedFiles, getDetectionReport, deleteFiles, getBulkReports, openCli } from './services/api';
+import { getProcessedFiles, getDetectionReport, deleteFiles, getBulkReports, openCli, getQueueStatus } from './services/api';
 import { generateTextSummary, downloadTextFile } from './utils/export';
 import './App.css';
+
+const SESSION_STORAGE_KEY = 'auqa_queue_session_start';
 
 function App() {
   const [files, setFiles] = useState([]);
@@ -14,6 +16,37 @@ function App() {
   const [detections, setDetections] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasActiveJobs, setHasActiveJobs] = useState(false);
+  const sessionStartTimeRef = useRef(null);
+
+  // Initialize session start time
+  useEffect(() => {
+    let sessionStart = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    if (!sessionStart) {
+      sessionStart = Math.floor(Date.now() / 1000);
+      sessionStorage.setItem(SESSION_STORAGE_KEY, sessionStart.toString());
+    }
+    sessionStartTimeRef.current = parseInt(sessionStart, 10);
+  }, []);
+
+  // Monitor queue status to determine polling frequency
+  useEffect(() => {
+    if (sessionStartTimeRef.current === null) return;
+
+    const checkQueueStatus = async () => {
+      try {
+        const status = await getQueueStatus(sessionStartTimeRef.current);
+        const hasJobs = (status.inProgress > 0 || status.queued > 0);
+        setHasActiveJobs(hasJobs);
+      } catch (error) {
+        console.error('Failed to check queue status:', error);
+      }
+    };
+
+    checkQueueStatus();
+    const interval = setInterval(checkQueueStatus, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     loadFiles();
@@ -26,6 +59,47 @@ function App() {
       setDetections(null);
     }
   }, [selectedFile]);
+
+  // Auto-refresh files list when jobs are active
+  useEffect(() => {
+    if (sessionStartTimeRef.current === null) return;
+
+    // Poll more frequently when jobs are active, less when idle
+    const pollInterval = hasActiveJobs ? 3000 : 10000; // 3s when active, 10s when idle
+
+    const pollForNewFiles = async () => {
+      try {
+        const processedFiles = await getProcessedFiles();
+        // Only update if the number of files changed (new files added)
+        setFiles(prevFiles => {
+          // Check if we have new files by comparing counts or IDs
+          if (processedFiles.length !== prevFiles.length) {
+            return processedFiles;
+          }
+          // Check if any file IDs are new
+          const prevIds = new Set(prevFiles.map(f => f.id));
+          const hasNewFiles = processedFiles.some(f => !prevIds.has(f.id));
+          
+          // If we have a selected file, check if it was updated
+          if (selectedFile && hasNewFiles) {
+            const updatedFile = processedFiles.find(f => f.id === selectedFile.id);
+            if (updatedFile && updatedFile.processedDate !== selectedFile.processedDate) {
+              // File was updated, reload its detections
+              setTimeout(() => loadDetections(selectedFile.id), 500);
+            }
+          }
+          
+          return hasNewFiles ? processedFiles : prevFiles;
+        });
+      } catch (err) {
+        // Silently fail during polling to avoid spamming errors
+        console.error('Error polling for new files:', err);
+      }
+    };
+
+    const interval = setInterval(pollForNewFiles, pollInterval);
+    return () => clearInterval(interval);
+  }, [hasActiveJobs, selectedFile]);
 
   const loadFiles = async () => {
     try {

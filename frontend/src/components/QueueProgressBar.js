@@ -102,9 +102,6 @@ const QueueProgressBar = () => {
             <span className="queue-status-item queued">
               Queued: {queued}
             </span>
-            <span className="queue-status-item in-progress">
-              In Progress: {inProgress}
-            </span>
             <span className="queue-status-item completed">
               Completed: {completed}
             </span>

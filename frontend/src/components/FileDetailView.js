@@ -62,6 +62,13 @@ const FileDetailView = ({ file, report }) => {
     return acc;
   }, {});
 
+  // Sort detection types: "Speech Quality" should always be last
+  const sortedDetectionTypes = Object.keys(detectionsByType).sort((a, b) => {
+    if (a === 'Speech Quality') return 1; // Speech Quality goes to the end
+    if (b === 'Speech Quality') return -1;
+    return a.localeCompare(b); // Alphabetical order for others
+  });
+
   // Toggle expanded state for a detection type
   const toggleType = (type) => {
     setExpandedTypes(prev => ({
@@ -148,6 +155,8 @@ const FileDetailView = ({ file, report }) => {
         return '#fd7e14';
       case 'Overall LUFS':
         return '#0d6efd';
+      case 'Speech Quality':
+        return '#0056b3';
       default:
         return '#6c757d';
     }
@@ -269,8 +278,9 @@ const FileDetailView = ({ file, report }) => {
 
               <h3 className="file-detail-issues-title">Detected Issues</h3>
               <div className="file-detail-detection-groups">
-                {Object.entries(detectionsByType).map(([type, typeDetections]) => {
-                  const isExpanded = expandedTypes[type] !== false; // Default to expanded
+                {sortedDetectionTypes.map((type) => {
+                  const typeDetections = detectionsByType[type];
+                  const isExpanded = expandedTypes[type] === true; // Default to collapsed
                   const firstDetection = typeDetections[0];
                   const params = firstDetection.params || {};
                   

@@ -329,7 +329,7 @@ def export_files():
 def get_detection_types():
     """Get available detection types and their default parameters."""
     try:
-        from .analysis_types import ANALYSIS_TYPES
+        from job_queue.analysis_types import ANALYSIS_TYPES
         
         detection_types = {}
         for det_type, config in ANALYSIS_TYPES.items():
@@ -362,8 +362,8 @@ def queue_job():
         
         # Import here to avoid circular imports
         from audio_processing.audio_import import AudioLoader
-        from .worker import AudioDetectionJob
-        from .analysis_types import ANALYSIS_TYPES
+        from job_queue.worker import AudioDetectionJob
+        from job_queue.analysis_types import ANALYSIS_TYPES
         from rq import Queue
         
         # Validate detection types
@@ -519,7 +519,7 @@ def get_queue_status():
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-    """Handle file upload and automatically queue for processing."""
+    """Handle file upload. File is saved but not automatically queued."""
     try:
         print(f"Upload request received. Files: {list(request.files.keys())}")
         if 'file' not in request.files:
@@ -539,62 +539,10 @@ def upload_file():
         file_path = os.path.join(AUDIO_FILES_DIR, file.filename)
         file.save(file_path)
         
-        # Get detection types from query parameter (default to all)
-        detection_types_param = request.args.get('detection_types', 'all')
-        
-        # Import here to avoid circular imports
-        from audio_processing.audio_import import AudioLoader
-        from .worker import AudioDetectionJob
-        from .analysis_types import ANALYSIS_TYPES
-        from rq import Queue
-        
-        # Queue the file for processing
-        try:
-            redis_conn = redis.from_url(REDIS_URL)
-            redis_conn.ping()
-            job_queue = Queue(connection=redis_conn)
-            
-            loader = AudioLoader(directory=AUDIO_FILES_DIR)
-            audio_file_path = file.filename  # Relative path from configured audio directory
-            
-            # Determine which detection types to run
-            if detection_types_param.lower() == 'all':
-                detection_params = {det_type: {} for det_type in ANALYSIS_TYPES.keys()}
-            else:
-                # Parse comma-separated list of detection types
-                requested_types = [t.strip() for t in detection_types_param.split(',')]
-                detection_params = {}
-                for det_type in requested_types:
-                    if det_type in ANALYSIS_TYPES:
-                        detection_params[det_type] = {}
-            
-            if not detection_params:
-                return jsonify({
-                    'message': 'File uploaded successfully but no valid detection types specified',
-                    'filename': file.filename
-                }), 200
-            
-            # Create job and queue it
-            job = AudioDetectionJob(loader, audio_file_path, REDIS_URL)
-            job_queue.enqueue(job.load_and_queue, detection_params)
-            
-            return jsonify({
-                'message': 'File uploaded and queued for processing successfully',
-                'filename': file.filename,
-                'detection_types': list(detection_params.keys())
-            })
-        except redis.ConnectionError:
-            return jsonify({
-                'message': 'File uploaded successfully, but could not queue for processing (Redis not available)',
-                'filename': file.filename,
-                'warning': 'Please ensure Redis is running and queue the file manually'
-            }), 200
-        except Exception as queue_error:
-            return jsonify({
-                'message': 'File uploaded successfully, but failed to queue for processing',
-                'filename': file.filename,
-                'error': str(queue_error)
-            }), 200
+        return jsonify({
+            'message': 'File uploaded successfully',
+            'filename': file.filename
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
