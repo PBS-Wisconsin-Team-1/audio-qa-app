@@ -113,6 +113,16 @@ The sample screenshot above (`assets/AuQA_screenshot.png`) shows the gallery, de
 - If the frontend is slow to start, try deleting `node_modules` and re-running `npm install`, or check Node.js version compatibility.
 - When running in Docker, set `AUDIO_FILES_PATH` in your env before `docker-compose up` if you want to mount a custom audio folder.
 
+## What works/doesn't work
+AuQA is a fully functional app, and is ready to use as is. We have already removed features that didn’t work or improved them for the final iteration. 
+
+
+## What future teams can work on next
+*Detection types: Due to time constraints, we weren’t able to create a ton of detection types. We have included cutout, clipping, loudness, overall LUFS and speech quality. Future teams can create more of these per client needs. 
+*Detection Improvements: Though we have implemented the detections mentioned above, future teams can always improve the actual detection accuracy, and do a lot of further testing to identify and improve false positives. 
+*Queue status progress bar: In our final iteration, we had to take out an “In Progress: #” tab update on the progress bar for the queue because it wouldn’t detect the live number of files being analyzed. In other words, the progress count would skip from “Queued” to “Completed” without ever changing the value of “In Progress” which sat between the two statuses. Future teams can improve the functionality of the progress bar. 
+
+
 ## Development
 
 - Backend API: `src/job_queue/api_server.py`
