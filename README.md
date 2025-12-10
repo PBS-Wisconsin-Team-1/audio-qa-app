@@ -2,7 +2,7 @@
 
 ![AuQA Screenshot](assets/AuQA-screenshot.png)
 
-AuQA is an audio quality assurance tool that analyzes audio files for common artifacts such as clipping, cutouts (dropouts), and perceptual quality issues. The web frontend lets you upload audio, browse processed files, inspect per-file detection reports and clips, and launch the CLI client from the UI.
+AuQA is an audio quality assurance tool that analyzes audio files for common artifacts such as clipping, cutouts (dropouts), loudness and perceptual quality issues. The web frontend lets you upload audio, browse processed files, inspect per-file detection reports and clips, and launch the CLI client from the UI.
 
 ## Features
 
@@ -10,7 +10,8 @@ AuQA is an audio quality assurance tool that analyzes audio files for common art
 - Computes overall metrics (sample rate, channels, duration, loudness indicators)
 - Per-window MOS (mean opinion score) detection using `squim` (or a simple fallback estimator)
 - Saves per-file reports and example audio clips into `detection_results/`
-- Small React frontend for browsing results and launching the CLI
+- React frontend for uploading/queuing files, saving results, and browsing reports.
+- Option to launch CLI and from frontend and process all functionity in CLI.
 
 ## Prerequisites
 
